@@ -38,6 +38,7 @@ import { ZAP_SETTINGS } from '@constants/config'
 import { useSendDepositZapTransaction } from '@hooks/zaps/useSendDepositZapTransaction'
 import { useZapTokenOptions } from '@hooks/zaps/useZapTokenOptions'
 import { isValidFormInput, TxFormInput, TxFormValues } from '../TxFormInput'
+import { connectorsForWallets } from '@rainbow-me/rainbowkit'
 
 export const depositFormTokenAddressAtom = atom<Address | undefined>(undefined)
 export const depositFormTokenAmountAtom = atom<string>('')
@@ -73,7 +74,8 @@ export const DepositForm = (props: DepositFormProps) => {
   const [formTokenAddress, setFormTokenAddress] = useAtom(depositFormTokenAddressAtom)
 
   const tokenAddress = formTokenAddress ?? vaultToken?.address
-
+  console.log("Current token address")
+  console.log({tokenAddress})
   const { vaults } = useSelectedVaults()
 
   const inputVault = useMemo(() => {
@@ -106,7 +108,6 @@ export const DepositForm = (props: DepositFormProps) => {
       : undefined
 
   const { data: tokenWithAmount, isFetched: isFetchedTokenBalance } = useTokenBalance(
-    vault.chainId,
     userAddress!,
     tokenAddress!,
     { refetchOnWindowFocus: true }
@@ -279,19 +280,43 @@ export const DepositForm = (props: DepositFormProps) => {
   const tokenPickerOptions = useMemo(() => {
     const getOptionId = (option: Token) => `zapToken-${option.chainId}-${option.address}`
 
-    let options = zapTokenOptions.map(
+    // console.log("Zap token options")
+    // console.log({zapTokenOptions})
+    let options = zapTokenOptions.
+      filter(option => {
+        // console.log(option.value)
+        // console.log(option.value > 0)
+        return option.value > 0
+      })
+      .map(
       (tokenOption): DropdownItem => ({
         id: getOptionId(tokenOption),
         content: <TokenPickerOption token={tokenOption} />,
         onClick: () => setFormTokenAddress(tokenOption.address)
       })
     )
+    // console.log("Modified Options")
+    // console.log({ options })
+  //   let options = zapTokenOptions
+  //     .filter(tokenOption => {
+  //       console.log
+  //       tokenOption.value > 0)
+  //     } 
+  // .map(
+  //   (tokenOption): DropdownItem => ({
+  //     id: getOptionId(tokenOption),
+  //     content: <TokenPickerOption token={tokenOption} />,
+  //     onClick: () => setFormTokenAddress(tokenOption.address)
+  //   })
+  // )
+    console.log("Vault token")
+    console.log({vaultToken})
 
     if (!!vaultToken) {
       const isVaultToken = (id: string) => lower(id.split('-')[2]) === lower(vaultToken.address)
-
+      
       const vaultTokenOption = options.find((option) => isVaultToken(option.id))
-
+      console.log({vaultTokenOption})
       if (!!vaultTokenOption) {
         options = options.filter((option) => !isVaultToken(option.id))
         options.unshift(vaultTokenOption)
@@ -300,14 +325,16 @@ export const DepositForm = (props: DepositFormProps) => {
         const price = vaultToken.price ?? 0
         const value = parseFloat(formatUnits(amount, vaultToken.decimals)) * price
 
-        options.unshift({
-          id: getOptionId(vaultToken),
-          content: <TokenPickerOption token={{ ...vaultToken, amount, price, value }} />,
-          onClick: () => setFormTokenAddress(vaultToken.address)
-        })
+        if (amount != 0n) {
+          console.log(`Adding ${vaultToken.symbol} to options`)
+          options.unshift({
+            id: getOptionId(vaultToken),
+            content: <TokenPickerOption token={{ ...vaultToken, amount, price, value }} />,
+            onClick: () => setFormTokenAddress(vaultToken.address)
+          })
+        }
       }
     }
-
     return options
   }, [zapTokenOptions, vaultToken, vaultTokenWithAmount])
 
@@ -336,6 +363,8 @@ export const DepositForm = (props: DepositFormProps) => {
       setMinReceived(undefined)
     }
   }, [depositAmount, zapAmountOut, tokenInputData, shareInputData])
+
+console.log({tokenInputData})
 
   return (
     <div className='flex flex-col isolate'>

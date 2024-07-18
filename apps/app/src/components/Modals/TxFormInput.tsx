@@ -120,6 +120,8 @@ export const TxFormInput = (props: TxFormInputProps) => {
     `${priceImpact > 0 ? '+' : ''}${formatNumberForDisplay(priceImpact, {
       maximumFractionDigits: 2
     })}%`
+  
+  console.log({tokenPickerOptions})
 
   return (
     <div
