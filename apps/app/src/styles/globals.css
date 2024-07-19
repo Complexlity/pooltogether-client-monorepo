@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+
+.glassBg:hover {
+  background: rgba(255, 255, 255, 0.29);
+box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+backdrop-filter: blur(0px);
+-webkit-backdrop-filter: blur(0px);
+border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.glassBg.selected {
+  background: rgba(255, 255, 255, 0.29);
+box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+backdrop-filter: blur(0px);
+-webkit-backdrop-filter: blur(0px);
+border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+
 @layer base {
   @font-face {
     font-family: 'Grotesk';
@@ -72,3 +90,4 @@
     font-feature-settings: 'calt' off;
   }
 }
+

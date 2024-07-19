@@ -3,11 +3,14 @@ import { TokenWithAmount, TokenWithLogo, TokenWithPrice } from '@shared/types'
 import { Dropdown, DropdownItem, Spinner } from '@shared/ui'
 import { DOLPHIN_ADDRESS, formatNumberForDisplay, lower } from '@shared/utilities'
 import classNames from 'classnames'
+import { useAtomValue } from 'jotai'
 import { useTranslations } from 'next-intl'
+import { ReactNode } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { getRoundedDownFormattedTokenAmount } from 'src/utils'
 import { formatUnits } from 'viem'
 import { NATIVE_ASSET_IGNORE_AMOUNT } from '@constants/config'
+import { crossingChainDetails } from './DepositModal/DepositForm'
 
 export interface TxFormValues {
   tokenAmount: string
@@ -25,7 +28,10 @@ export interface TxFormInputProps {
   showMaxButton?: boolean
   showTokenPicker?: boolean
   tokenPickerOptions?: DropdownItem[]
+  crossTokenPickerOptions?: DropdownItem[] | null
+  depositTabHeader?: ReactNode
   priceImpact?: number
+  isCrossDepositing?: boolean
   fallbackLogoToken?: Partial<TokenWithLogo>
   className?: string
   inputClassName?: string
@@ -44,6 +50,9 @@ export const TxFormInput = (props: TxFormInputProps) => {
     showMaxButton,
     showTokenPicker,
     tokenPickerOptions,
+    crossTokenPickerOptions,
+    depositTabHeader,
+    isCrossDepositing: isCrossDeposting,
     priceImpact,
     fallbackLogoToken,
     className,
@@ -60,6 +69,10 @@ export const TxFormInput = (props: TxFormInputProps) => {
   } = useFormContext<TxFormValues>()
 
   const formAmount = watch(formKey, '0')
+
+  const formCrossChainDetails = useAtomValue(crossingChainDetails)
+
+  const isCrossing = !!formCrossChainDetails
 
   if (!token) {
     return (
@@ -92,18 +105,24 @@ export const TxFormInput = (props: TxFormInputProps) => {
       : null
 
   const setFormAmountToMax = () => {
-    const maxAmount =
-      lower(token.address) === DOLPHIN_ADDRESS
-        ? token.amount > NATIVE_ASSET_IGNORE_AMOUNT[token.chainId]
-          ? token.amount - NATIVE_ASSET_IGNORE_AMOUNT[token.chainId]
-          : 0n
-        : token.amount
+    let formattedAmount
 
-    const formattedAmount = formatUnits(maxAmount, token.decimals)
+    if (isCrossing) {
+      //@ts-expect-error
+      formattedAmount = token.balance
+    } else {
+      const maxAmount =
+        lower(token.address) === DOLPHIN_ADDRESS
+          ? token.amount > NATIVE_ASSET_IGNORE_AMOUNT[token.chainId]
+            ? token.amount - NATIVE_ASSET_IGNORE_AMOUNT[token.chainId]
+            : 0n
+          : token.amount
+
+      formattedAmount = formatUnits(maxAmount, token.decimals)
+    }
     const slicedAmount = formattedAmount.endsWith('.0')
       ? formattedAmount.slice(0, -2)
       : formattedAmount
-
     setValue(formKey, slicedAmount, { shouldValidate: true })
     onChange?.(formattedAmount)
   }
@@ -116,12 +135,11 @@ export const TxFormInput = (props: TxFormInputProps) => {
   )
 
   const formattedPriceImpact =
+    !isCrossing &&
     priceImpact !== undefined &&
     `${priceImpact > 0 ? '+' : ''}${formatNumberForDisplay(priceImpact, {
       maximumFractionDigits: 2
     })}%`
-  
-  console.log({tokenPickerOptions})
 
   return (
     <div
@@ -152,19 +170,26 @@ export const TxFormInput = (props: TxFormInputProps) => {
             <Spinner className={classNames({ hidden: !isLoading })} />
           </div>
         )}
-        {showTokenPicker && !!tokenPickerOptions?.length ? (
-          <div className='relative shrink-0'>
-            <Dropdown
-              label={<TokenBadge />}
-              items={tokenPickerOptions}
-              inline={true}
-              className='pl-1 pr-1 border-0 rounded-lg hover:bg-pt-transparent'
-              floatingContentClassName='md:!fixed md:!inset-auto md:!transform-none md:-mx-[calc(0.5rem+1px)] md:-my-[calc(2.5rem+1px)]'
-            />
-          </div>
-        ) : (
-          <TokenBadge />
-        )}
+        <div>
+          {showTokenPicker && !!tokenPickerOptions?.length ? (
+            <div className='relative shrink-0'>
+              <Dropdown
+                header={depositTabHeader}
+                label={<TokenBadge />}
+                items={
+                  isCrossDeposting && crossTokenPickerOptions
+                    ? crossTokenPickerOptions
+                    : tokenPickerOptions
+                }
+                inline={true}
+                className='pl-1 pr-1 border-0 rounded-lg hover:bg-pt-transparent'
+                floatingContentClassName='md:!fixed md:!inset-auto md:!transform-none md:-mx-[calc(0.5rem+1px)] md:-my-[calc(2.5rem+1px)]'
+              />
+            </div>
+          ) : (
+            <TokenBadge />
+          )}
+        </div>
       </div>
       {showInfoRow && (
         <div className='flex justify-between gap-6 text-xs text-pt-purple-100 md:text-base'>

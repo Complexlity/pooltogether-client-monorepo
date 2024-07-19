@@ -9,7 +9,8 @@ import {
   useVaultSharePrice,
   useVaultTokenPrice
 } from '@generationsoftware/hyperstructure-react-hooks'
-import { TokenIcon } from '@shared/react-components'
+import { PaymentOption } from '@paywithglide/glide-js'
+import { NetworkIcon, TokenIcon } from '@shared/react-components'
 import {
   Token,
   TokenWithAmount,
@@ -29,24 +30,29 @@ import {
 import classNames from 'classnames'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import { useTranslations } from 'next-intl'
-import { useEffect, useMemo, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { getRoundedDownFormattedTokenAmount } from 'src/utils'
 import { Address, formatUnits, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
 import { ZAP_SETTINGS } from '@constants/config'
+import { useCrossZapTokenOptions } from '@hooks/useCrossZapTokenOptions'
+import { useEthPriceInUsd } from '@hooks/useEthPrice'
 import { useSendDepositZapTransaction } from '@hooks/zaps/useSendDepositZapTransaction'
 import { useZapTokenOptions } from '@hooks/zaps/useZapTokenOptions'
 import { isValidFormInput, TxFormInput, TxFormValues } from '../TxFormInput'
-import { connectorsForWallets } from '@rainbow-me/rainbowkit'
 
 export const depositFormTokenAddressAtom = atom<Address | undefined>(undefined)
 export const depositFormTokenAmountAtom = atom<string>('')
 export const depositFormShareAmountAtom = atom<string>('')
 
 export const depositZapPriceImpactAtom = atom<number | undefined>(undefined)
-export const depositZapMinReceivedAtom = atom<bigint | undefined>(undefined)
 
+export const depositZapMinReceivedAtom = atom<bigint | undefined>(undefined)
+export const depositChainIdAtom = atom<number | undefined>(undefined)
+export const crossingChainDetails = atom<{ chainId: number; eipAddress: Address } | undefined>(
+  undefined
+)
 export interface DepositFormProps {
   vault: Vault
   showInputInfoRows?: boolean
@@ -72,10 +78,11 @@ export const DepositForm = (props: DepositFormProps) => {
   const { data: share } = useVaultSharePrice(vault)
 
   const [formTokenAddress, setFormTokenAddress] = useAtom(depositFormTokenAddressAtom)
+  const [formDepositChainId, setFormDepositChainId] = useAtom(depositChainIdAtom)
+  const [formCrossChainDetails, setFormCrossChainDetails] = useAtom(crossingChainDetails)
 
   const tokenAddress = formTokenAddress ?? vaultToken?.address
-  console.log("Current token address")
-  console.log({tokenAddress})
+  const depositChainId = formDepositChainId ?? vaultToken?.chainId
   const { vaults } = useSelectedVaults()
 
   const inputVault = useMemo(() => {
@@ -94,6 +101,7 @@ export const DepositForm = (props: DepositFormProps) => {
   const { data: tokenData } = useToken(vault.chainId, tokenAddress!)
   const { data: tokenPrices } = useTokenPrices(vault.chainId, !!tokenAddress ? [tokenAddress] : [])
   const { data: inputVaultWithPrice } = useVaultSharePrice(inputVault!)
+  const { data: ethToUsdPrice } = useEthPriceInUsd()
   const token: (TokenWithSupply & TokenWithPrice & Partial<TokenWithLogo>) | undefined =
     !!tokenAddress && (!!tokenData || !!inputVaultWithPrice)
       ? {
@@ -108,6 +116,7 @@ export const DepositForm = (props: DepositFormProps) => {
       : undefined
 
   const { data: tokenWithAmount, isFetched: isFetchedTokenBalance } = useTokenBalance(
+    vault.chainId,
     userAddress!,
     tokenAddress!,
     { refetchOnWindowFocus: true }
@@ -119,6 +128,8 @@ export const DepositForm = (props: DepositFormProps) => {
     userAddress!
   )
   const shareBalance = isFetchedShareWithAmount && !!shareWithAmount ? shareWithAmount.amount : 0n
+
+  const isCrossing = !!formCrossChainDetails
 
   const formMethods = useForm<TxFormValues>({
     mode: 'onChange',
@@ -136,6 +147,8 @@ export const DepositForm = (props: DepositFormProps) => {
 
   useEffect(() => {
     setFormTokenAddress(undefined)
+    setFormDepositChainId(undefined)
+    setFormCrossChainDetails(undefined)
     setFormTokenAmount('')
     setFormShareAmount('')
     setPriceImpact(undefined)
@@ -143,6 +156,10 @@ export const DepositForm = (props: DepositFormProps) => {
     setCachedZapAmountOut(undefined)
     formMethods.reset()
   }, [])
+
+  useEffect(() => {
+    formMethods.reset()
+  }, [formCrossChainDetails])
 
   const depositAmount = useMemo(() => {
     return !!formTokenAmount && token?.decimals !== undefined
@@ -154,6 +171,8 @@ export const DepositForm = (props: DepositFormProps) => {
     { address: token?.address!, decimals: token?.decimals!, amount: depositAmount },
     vault
   )
+
+  const { data: crossZapTokenOptions } = useCrossZapTokenOptions(vault, userAddress!)
 
   const isZapping =
     !!vaultToken && !!formTokenAddress && lower(vaultToken.address) !== lower(formTokenAddress)
@@ -185,9 +204,7 @@ export const DepositForm = (props: DepositFormProps) => {
       const slicedShares = formattedShares.endsWith('.0')
         ? formattedShares.slice(0, -2)
         : formattedShares
-
       setFormShareAmount(slicedShares)
-
       formMethods.setValue('shareAmount', slicedShares, {
         shouldValidate: true
       })
@@ -203,6 +220,7 @@ export const DepositForm = (props: DepositFormProps) => {
           const tokens = parseUnits(tokenAmount, token.decimals)
           const shares = getSharesFromAssets(tokens, vaultExchangeRate, share.decimals)
           const formattedShares = formatUnits(shares, share.decimals)
+
           const slicedShares = formattedShares.endsWith('.0')
             ? formattedShares.slice(0, -2)
             : formattedShares
@@ -216,6 +234,41 @@ export const DepositForm = (props: DepositFormProps) => {
       } else {
         setFormTokenAmount('0')
       }
+    }
+  }
+
+  const handleCrossTokenAmountChange = (tokenAmount: string) => {
+    if (
+      !!vaultExchangeRate &&
+      !!crossingTokenInputData &&
+      share?.price !== undefined &&
+      ethToUsdPrice
+    ) {
+      if (isValidFormInput(tokenAmount, crossingTokenInputData.decimals!)) {
+        setFormTokenAmount(tokenAmount)
+
+        const itemInUsd =
+          //@ts-expect-error
+          (tokenAmount * Number(crossingTokenInputData.balanceUSD)) /
+          //@ts-expect-error
+          Number(crossingTokenInputData.balance)
+        const sharePriceInUsd = share.price * ethToUsdPrice
+
+        const formattedShares = itemInUsd * sharePriceInUsd
+        console.log('Formatted shares')
+        console.log({ formattedShares })
+        const slicedShares = formattedShares.toFixed(2)
+
+        setFormShareAmount(slicedShares)
+        console.log('Sliced shares...')
+        console.log({ slicedShares })
+
+        formMethods.setValue('shareAmount', slicedShares, {
+          shouldValidate: true
+        })
+      }
+    } else {
+      setFormTokenAmount('0')
     }
   }
 
@@ -264,6 +317,29 @@ export const DepositForm = (props: DepositFormProps) => {
     }
   }, [token, tokenBalance])
 
+  const crossingTokenInputData: Partial<typeof tokenInputData> | undefined = useMemo(() => {
+    if (!!formCrossChainDetails && !!crossZapTokenOptions && !!ethToUsdPrice) {
+      const currentItem = crossZapTokenOptions[formCrossChainDetails?.chainId].find(
+        //@ts-expect-error
+        (item) => item.paymentCurrency == formCrossChainDetails.eipAddress
+      )
+      if (!currentItem) return undefined
+
+      return {
+        ...currentItem,
+        amount: parseUnits(currentItem.balance, currentItem.decimals),
+        price: Number(currentItem.balanceUSD) / Number(currentItem.balance) / ethToUsdPrice,
+        chainId: formCrossChainDetails.chainId,
+        symbol: currentItem.currencySymbol,
+        decimals: currentItem.decimals,
+        logoURI: currentItem.currencyLogoUrl,
+        name: currentItem.currencyName
+      }
+    }
+    return undefined
+  }, [formCrossChainDetails])
+
+  //
   const shareInputData = useMemo(() => {
     if (!!share) {
       return {
@@ -273,50 +349,45 @@ export const DepositForm = (props: DepositFormProps) => {
         logoURI: shareLogoURI ?? vault.tokenLogoURI
       }
     }
-  }, [vault, share, shareBalance, shareLogoURI])
+  }, [vault, share, shareBalance, shareLogoURI, isCrossing])
 
   const zapTokenOptions = useZapTokenOptions(vault.chainId)
 
   const tokenPickerOptions = useMemo(() => {
     const getOptionId = (option: Token) => `zapToken-${option.chainId}-${option.address}`
 
-    // console.log("Zap token options")
-    // console.log({zapTokenOptions})
-    let options = zapTokenOptions.
-      filter(option => {
-        // console.log(option.value)
-        // console.log(option.value > 0)
-        return option.value > 0
+    let options = zapTokenOptions
+      .filter((option) => {
+        return true
+        // return option.value > 0
       })
       .map(
-      (tokenOption): DropdownItem => ({
-        id: getOptionId(tokenOption),
-        content: <TokenPickerOption token={tokenOption} />,
-        onClick: () => setFormTokenAddress(tokenOption.address)
-      })
-    )
-    // console.log("Modified Options")
-    // console.log({ options })
-  //   let options = zapTokenOptions
-  //     .filter(tokenOption => {
-  //       console.log
-  //       tokenOption.value > 0)
-  //     } 
-  // .map(
-  //   (tokenOption): DropdownItem => ({
-  //     id: getOptionId(tokenOption),
-  //     content: <TokenPickerOption token={tokenOption} />,
-  //     onClick: () => setFormTokenAddress(tokenOption.address)
-  //   })
-  // )
-    console.log("Vault token")
-    console.log({vaultToken})
+        (tokenOption): DropdownItem => ({
+          id: getOptionId(tokenOption),
+          content: <TokenPickerOption token={tokenOption} />,
+          onClick: () => {
+            setFormDepositChainId(undefined)
+            setFormCrossChainDetails(undefined)
+            setFormTokenAddress(tokenOption.address)
+          }
+        })
+      )
+    //   let options = zapTokenOptions
+    //     .filter(tokenOption => {
+    //       tokenOption.value > 0)
+    //     }
+    // .map(
+    //   (tokenOption): DropdownItem => ({
+    //     id: getOptionId(tokenOption),
+    //     content: <TokenPickerOption token={tokenOption} />,
+    //     onClick: () => setFormTokenAddress(tokenOption.address)
+    //   })
+    // )
 
     if (!!vaultToken) {
       const isVaultToken = (id: string) => lower(id.split('-')[2]) === lower(vaultToken.address)
-      
+
       const vaultTokenOption = options.find((option) => isVaultToken(option.id))
-      console.log({vaultTokenOption})
       if (!!vaultTokenOption) {
         options = options.filter((option) => !isVaultToken(option.id))
         options.unshift(vaultTokenOption)
@@ -326,17 +397,73 @@ export const DepositForm = (props: DepositFormProps) => {
         const value = parseFloat(formatUnits(amount, vaultToken.decimals)) * price
 
         if (amount != 0n) {
-          console.log(`Adding ${vaultToken.symbol} to options`)
           options.unshift({
             id: getOptionId(vaultToken),
             content: <TokenPickerOption token={{ ...vaultToken, amount, price, value }} />,
-            onClick: () => setFormTokenAddress(vaultToken.address)
+            onClick: () => {
+              setFormDepositChainId(undefined)
+              setFormCrossChainDetails(undefined)
+              setFormTokenAddress(vaultToken.address)
+            }
           })
         }
       }
     }
     return options
   }, [zapTokenOptions, vaultToken, vaultTokenWithAmount])
+  const crossTokenPickerOptions = useMemo(() => {
+    if (!crossZapTokenOptions) return null
+    const currentOptions = crossZapTokenOptions[depositChainId!]
+
+    if (!currentOptions) return null
+    let options = currentOptions
+      .filter((option) => {
+        return true
+        // return option.value > 0
+      })
+      .map(
+        (crossTokenOption): DropdownItem => ({
+          id: crossTokenOption.paymentCurrency,
+          content: (
+            <BasicTokenPickerOption
+              token={crossTokenOption}
+              key={crossTokenOption.paymentCurrency}
+            />
+          ),
+          onClick: () => {
+            setFormTokenAddress(undefined)
+            setFormCrossChainDetails({
+              chainId: depositChainId!,
+              //@ts-expect-error
+              eipAddress: crossTokenOption.paymentCurrency
+            })
+          }
+        })
+      )
+
+    return options
+  }, [crossZapTokenOptions, depositChainId, vaultToken, vaultTokenWithAmount])
+
+  const depositTabHeader: ReactNode = (() => {
+    const crossItems = Object.keys(crossZapTokenOptions ?? []).map((item) => Number(item))
+    if (crossItems.length == 0) return null
+    const availableItems = [vault.chainId, ...crossItems]
+    return (
+      <div className='flex items-center justify-center gap-4 py-2'>
+        {availableItems.map((item) => (
+          <button
+            key={item}
+            className={`glassBg w-12 h-12 p-2 rounded-full overflow-hidden ${
+              depositChainId === item ? 'selected' : 'opacity-80'
+            }`}
+            onClick={() => setFormDepositChainId(item)}
+          >
+            <NetworkIcon chainId={item} />
+          </button>
+        ))}
+      </div>
+    )
+  })()
 
   useEffect(() => {
     if (
@@ -364,28 +491,46 @@ export const DepositForm = (props: DepositFormProps) => {
     }
   }, [depositAmount, zapAmountOut, tokenInputData, shareInputData])
 
-console.log({tokenInputData})
+  const isCrossDepositing = depositChainId !== vault.chainId
+
+  function isNotGreaterThanBalance(v: string) {
+    if (isCrossing) {
+      return (
+        //@ts-expect-error
+        (!!crossingTokenInputData && crossingTokenInputData.balance >= parseFloat(v)) ||
+        !crossZapTokenOptions ||
+        t_errors('notEnoughTokens', { symbol: crossingTokenInputData?.symbol ?? '?' })
+        //TODO: Add chain name to error description
+      )
+    }
+
+    return (
+      (!!tokenInputData &&
+        parseFloat(formatUnits(tokenInputData.amount, tokenInputData.decimals)) >= parseFloat(v)) ||
+      !isFetchedTokenBalance ||
+      !tokenWithAmount ||
+      t_errors('notEnoughTokens', { symbol: tokenInputData?.symbol ?? '?' })
+    )
+  }
 
   return (
     <div className='flex flex-col isolate'>
       <FormProvider {...formMethods}>
         <TxFormInput
-          token={tokenInputData}
+          //@ts-expect-error
+          token={isCrossing ? crossingTokenInputData : tokenInputData}
           formKey='tokenAmount'
           validate={{
-            isNotGreaterThanBalance: (v) =>
-              (!!tokenInputData &&
-                parseFloat(formatUnits(tokenInputData.amount, tokenInputData.decimals)) >=
-                  parseFloat(v)) ||
-              !isFetchedTokenBalance ||
-              !tokenWithAmount ||
-              t_errors('notEnoughTokens', { symbol: tokenInputData?.symbol ?? '?' })
+            isNotGreaterThanBalance
           }}
-          onChange={handleTokenAmountChange}
+          onChange={isCrossing ? handleCrossTokenAmountChange : handleTokenAmountChange}
           showInfoRow={showInputInfoRows}
           showMaxButton={true}
           showTokenPicker={!!ZAP_SETTINGS[vault.chainId]}
           tokenPickerOptions={tokenPickerOptions}
+          crossTokenPickerOptions={crossTokenPickerOptions}
+          depositTabHeader={depositTabHeader}
+          isCrossDepositing={isCrossDepositing}
           fallbackLogoToken={
             !!inputVault ? { ...inputVault.tokenData, logoURI: inputVault.tokenLogoURI } : undefined
           }
@@ -397,7 +542,7 @@ console.log({tokenInputData})
           onChange={handleShareAmountChange}
           showInfoRow={showInputInfoRows}
           priceImpact={priceImpact}
-          disabled={isZapping}
+          disabled={isZapping || isCrossing}
           isLoading={isFetchingZapArgs}
           fallbackLogoToken={vaultToken}
           className='my-0.5 z-10'
@@ -442,6 +587,10 @@ interface TokenPickerOptionProps {
   token: TokenWithAmount & Required<TokenWithPrice> & { value: number }
   className?: string
 }
+interface BasicTokenPickerOptionProps {
+  token: PaymentOption
+  className?: string
+}
 
 const TokenPickerOption = (props: TokenPickerOptionProps) => {
   const { token, className } = props
@@ -475,6 +624,29 @@ const TokenPickerOption = (props: TokenPickerOptionProps) => {
       <span className='text-sm text-gray-300 md:text-lg md:text-gray-700'>
         {getRoundedDownFormattedTokenAmount(token.amount, token.decimals)}
       </span>
+    </div>
+  )
+}
+const BasicTokenPickerOption = (props: BasicTokenPickerOptionProps) => {
+  const { token, className } = props
+
+  return (
+    <div
+      className={classNames(
+        'w-full min-w-[10rem]',
+        'flex items-center justify-between gap-8',
+        'px-2 py-1 font-semibold rounded-lg',
+        'hover:bg-pt-purple-200',
+        className
+      )}
+    >
+      <span className='flex items-center gap-1'>
+        <TokenIcon token={{ symbol: token.currencySymbol, logoURI: token.currencyLogoUrl }} />
+        <span className='text-lg text-pt-purple-50 md:text-2xl md:text-pt-purple-600'>
+          {token.currencySymbol}
+        </span>
+      </span>
+      <span className='text-sm text-gray-300 md:text-lg md:text-gray-700'>{token.balance}</span>
     </div>
   )
 }

@@ -18,6 +18,7 @@ import { walletSupportsPermit } from 'src/utils'
 import { TransactionReceipt } from 'viem'
 import { useAccount } from 'wagmi'
 import {
+  crossingChainDetails,
   depositFormShareAmountAtom,
   depositFormTokenAddressAtom,
   depositFormTokenAmountAtom
@@ -70,6 +71,7 @@ export const DepositModal = (props: DepositModalProps) => {
   const [depositTxHash, setDepositTxHash] = useState<string>()
 
   const [formTokenAddress, setFormTokenAddress] = useAtom(depositFormTokenAddressAtom)
+  const [formCrossingChainDetails, setFormCrossChainDetails] = useAtom(crossingChainDetails)
   const setFormTokenAmount = useSetAtom(depositFormTokenAmountAtom)
   const [formShareAmount, setFormShareAmount] = useAtom(depositFormShareAmountAtom)
 
@@ -107,6 +109,7 @@ export const DepositModal = (props: DepositModalProps) => {
     setIsModalOpen(false)
     setView('main')
     setFormTokenAddress(undefined)
+    setFormCrossChainDetails(undefined)
     setFormTokenAmount('')
     setFormShareAmount('')
   }
