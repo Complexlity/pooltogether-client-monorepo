@@ -10,7 +10,7 @@ import { useFormContext } from 'react-hook-form'
 import { getRoundedDownFormattedTokenAmount } from 'src/utils'
 import { formatUnits } from 'viem'
 import { NATIVE_ASSET_IGNORE_AMOUNT } from '@constants/config'
-import { crossingChainDetails } from './DepositModal/DepositForm'
+import { crossingChainDetailsAtom } from './DepositModal/DepositForm'
 
 export interface TxFormValues {
   tokenAmount: string
@@ -70,7 +70,7 @@ export const TxFormInput = (props: TxFormInputProps) => {
 
   const formAmount = watch(formKey, '0')
 
-  const formCrossChainDetails = useAtomValue(crossingChainDetails)
+  const formCrossChainDetails = useAtomValue(crossingChainDetailsAtom)
 
   const isCrossing = !!formCrossChainDetails
 

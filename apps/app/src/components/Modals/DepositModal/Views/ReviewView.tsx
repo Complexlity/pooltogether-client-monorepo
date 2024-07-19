@@ -27,6 +27,7 @@ import { useAccount } from 'wagmi'
 import { NetworkFees, NetworkFeesProps } from '../../NetworkFees'
 import { Odds } from '../../Odds'
 import {
+  crossingTokenDetailsAtom,
   depositFormShareAmountAtom,
   depositFormTokenAddressAtom,
   depositFormTokenAmountAtom,
@@ -104,6 +105,7 @@ const BasicDepositForm = (props: BasicDepositFormProps) => {
   const formShareAmount = useAtomValue(depositFormShareAmountAtom)
   const depositZapPriceImpact = useAtomValue(depositZapPriceImpactAtom)
   const depositZapMinReceived = useAtomValue(depositZapMinReceivedAtom)
+  const crossingTokenDetails = useAtomValue(crossingTokenDetailsAtom)
 
   const { data: vaultTokenAddress } = useVaultTokenAddress(vault)
 
@@ -140,6 +142,14 @@ const BasicDepositForm = (props: BasicDepositFormProps) => {
         : inputVault?.logoURI
   }
 
+  const crossTokenInfo = crossingTokenDetails
+    ? {
+        ...crossingTokenDetails,
+        amount: formTokenAmount,
+        logoURI: crossingTokenDetails.currencyLogoUrl
+      }
+    : undefined
+
   const shareInfo = {
     ...share,
     amount: formShareAmount,
@@ -148,7 +158,11 @@ const BasicDepositForm = (props: BasicDepositFormProps) => {
 
   return (
     <div className='w-full flex flex-col'>
-      <BasicDepositFormInput token={tokenInfo} className='mb-0.5' />
+      <BasicDepositFormInput
+        // @ts-expect-error
+        token={crossTokenInfo ? crossTokenInfo : tokenInfo}
+        className='mb-0.5'
+      />
       <BasicDepositFormInput
         token={shareInfo}
         fallbackLogoTokenAddress={vaultTokenAddress}

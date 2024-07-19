@@ -36,7 +36,7 @@ import { getRoundedDownFormattedTokenAmount } from 'src/utils'
 import { Address, formatUnits, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
 import { ZAP_SETTINGS } from '@constants/config'
-import { useCrossZapTokenOptions } from '@hooks/useCrossZapTokenOptions'
+import { useCrossZapTokenOptions } from '@hooks/glide/useCrossZapTokenOptions'
 import { useEthPriceInUsd } from '@hooks/useEthPrice'
 import { useSendDepositZapTransaction } from '@hooks/zaps/useSendDepositZapTransaction'
 import { useZapTokenOptions } from '@hooks/zaps/useZapTokenOptions'
@@ -50,9 +50,35 @@ export const depositZapPriceImpactAtom = atom<number | undefined>(undefined)
 
 export const depositZapMinReceivedAtom = atom<bigint | undefined>(undefined)
 export const depositChainIdAtom = atom<number | undefined>(undefined)
-export const crossingChainDetails = atom<{ chainId: number; eipAddress: Address } | undefined>(
+export const crossingChainDetailsAtom = atom<{ chainId: number; eipAddress: string } | undefined>(
   undefined
 )
+type Prettify<T> = { [K in keyof T]: T[K] } & {}
+export type crossTokenDetails = Prettify<
+  | Partial<{
+      amount: bigint
+      price: number
+      totalSupply: bigint
+      address: `0x${string}`
+      symbol: string
+      name: string
+      decimals: number
+      logoURI?: string | undefined
+    }> & {
+      chainId: number
+      paymentCurrency: string
+      paymentAmount: string
+      balance: string
+      balanceUSD: string
+      currencyName: string
+      currencySymbol: string
+      currencyLogoUrl: string
+      chainName: string
+      chainLogoUrl: string
+    }
+>
+
+export const crossingTokenDetailsAtom = atom<crossTokenDetails | undefined>(undefined)
 export interface DepositFormProps {
   vault: Vault
   showInputInfoRows?: boolean
@@ -79,7 +105,8 @@ export const DepositForm = (props: DepositFormProps) => {
 
   const [formTokenAddress, setFormTokenAddress] = useAtom(depositFormTokenAddressAtom)
   const [formDepositChainId, setFormDepositChainId] = useAtom(depositChainIdAtom)
-  const [formCrossChainDetails, setFormCrossChainDetails] = useAtom(crossingChainDetails)
+  const [formCrossChainDetails, setFormCrossChainDetails] = useAtom(crossingChainDetailsAtom)
+  const setCrossingTokenDetails = useSetAtom(crossingTokenDetailsAtom)
 
   const tokenAddress = formTokenAddress ?? vaultToken?.address
   const depositChainId = formDepositChainId ?? vaultToken?.chainId
@@ -248,20 +275,15 @@ export const DepositForm = (props: DepositFormProps) => {
         setFormTokenAmount(tokenAmount)
 
         const itemInUsd =
-          //@ts-expect-error
-          (tokenAmount * Number(crossingTokenInputData.balanceUSD)) /
-          //@ts-expect-error
+          (Number(tokenAmount) * Number(crossingTokenInputData.balanceUSD)) /
           Number(crossingTokenInputData.balance)
         const sharePriceInUsd = share.price * ethToUsdPrice
 
         const formattedShares = itemInUsd * sharePriceInUsd
-        console.log('Formatted shares')
-        console.log({ formattedShares })
+
         const slicedShares = formattedShares.toFixed(2)
 
         setFormShareAmount(slicedShares)
-        console.log('Sliced shares...')
-        console.log({ slicedShares })
 
         formMethods.setValue('shareAmount', slicedShares, {
           shouldValidate: true
@@ -317,11 +339,10 @@ export const DepositForm = (props: DepositFormProps) => {
     }
   }, [token, tokenBalance])
 
-  const crossingTokenInputData: Partial<typeof tokenInputData> | undefined = useMemo(() => {
+  const crossingTokenInputData: crossTokenDetails | undefined = useMemo(() => {
     if (!!formCrossChainDetails && !!crossZapTokenOptions && !!ethToUsdPrice) {
       const currentItem = crossZapTokenOptions[formCrossChainDetails?.chainId].find(
-        //@ts-expect-error
-        (item) => item.paymentCurrency == formCrossChainDetails.eipAddress
+        (item) => (item.paymentCurrency as string) == formCrossChainDetails.eipAddress
       )
       if (!currentItem) return undefined
 
@@ -338,8 +359,8 @@ export const DepositForm = (props: DepositFormProps) => {
     }
     return undefined
   }, [formCrossChainDetails])
+  setCrossingTokenDetails(crossingTokenInputData)
 
-  //
   const shareInputData = useMemo(() => {
     if (!!share) {
       return {
@@ -434,8 +455,7 @@ export const DepositForm = (props: DepositFormProps) => {
             setFormTokenAddress(undefined)
             setFormCrossChainDetails({
               chainId: depositChainId!,
-              //@ts-expect-error
-              eipAddress: crossTokenOption.paymentCurrency
+              eipAddress: crossTokenOption.paymentCurrency as string
             })
           }
         })
@@ -496,8 +516,7 @@ export const DepositForm = (props: DepositFormProps) => {
   function isNotGreaterThanBalance(v: string) {
     if (isCrossing) {
       return (
-        //@ts-expect-error
-        (!!crossingTokenInputData && crossingTokenInputData.balance >= parseFloat(v)) ||
+        (!!crossingTokenInputData && Number(crossingTokenInputData.balance) >= parseFloat(v)) ||
         !crossZapTokenOptions ||
         t_errors('notEnoughTokens', { symbol: crossingTokenInputData?.symbol ?? '?' })
         //TODO: Add chain name to error description

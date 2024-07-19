@@ -11,14 +11,16 @@ import { AlertIcon, createDepositTxToast } from '@shared/react-components'
 import { Modal } from '@shared/ui'
 import { LINKS, lower } from '@shared/utilities'
 import classNames from 'classnames'
-import { useAtom, useSetAtom } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useTranslations } from 'next-intl'
 import { ReactNode, useMemo, useState } from 'react'
 import { walletSupportsPermit } from 'src/utils'
 import { TransactionReceipt } from 'viem'
 import { useAccount } from 'wagmi'
+import { DepositCrossTxButton } from './DepositCrossTxButton'
 import {
-  crossingChainDetails,
+  crossingChainDetailsAtom,
+  crossingTokenDetailsAtom,
   depositFormShareAmountAtom,
   depositFormTokenAddressAtom,
   depositFormTokenAmountAtom
@@ -71,7 +73,9 @@ export const DepositModal = (props: DepositModalProps) => {
   const [depositTxHash, setDepositTxHash] = useState<string>()
 
   const [formTokenAddress, setFormTokenAddress] = useAtom(depositFormTokenAddressAtom)
-  const [formCrossingChainDetails, setFormCrossChainDetails] = useAtom(crossingChainDetails)
+  const [formCrossingChainDetails, setFormCrossChainDetails] = useAtom(crossingChainDetailsAtom)
+  const crossingTokenDetails = useAtomValue(crossingTokenDetailsAtom)
+  const isCrossing = !!formCrossingChainDetails
   const setFormTokenAmount = useSetAtom(depositFormTokenAmountAtom)
   const [formShareAmount, setFormShareAmount] = useAtom(depositFormShareAmountAtom)
 
@@ -134,7 +138,19 @@ export const DepositModal = (props: DepositModalProps) => {
         })}
       >
         {view === 'main' && !formShareAmount && <RisksDisclaimer vault={vault} />}
-        {isZapping ? (
+
+        {isCrossing && crossingTokenDetails ? (
+          <DepositCrossTxButton
+            vault={vault}
+            crossTokenDetails={crossingTokenDetails}
+            modalView={view}
+            setModalView={setView}
+            setDepositTxHash={setDepositTxHash}
+            refetchUserBalances={refetchUserBalances}
+            onSuccessfulApproval={onSuccessfulApproval}
+            onSuccessfulDeposit={onSuccessfulDeposit}
+          />
+        ) : isZapping ? (
           <DepositZapTxButton
             vault={vault}
             modalView={view}
