@@ -1,19 +1,8 @@
 import { Vault, vaultABI } from '@generationsoftware/hyperstructure-client-js'
-import {
-  useTokenAllowance,
-  useVaultTokenAddress
-} from '@generationsoftware/hyperstructure-react-hooks'
-import {
-  CAIP19,
-  chains,
-  createSession,
-  currencies,
-  Currency,
-  executeSession
-} from '@paywithglide/glide-js'
+import { CAIP19, createSession, executeSession } from '@paywithglide/glide-js'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { Address, isAddress, parseUnits, TransactionReceipt } from 'viem'
+import { Address, parseUnits, TransactionReceipt } from 'viem'
 import {
   useAccount,
   useSendTransaction,
@@ -23,7 +12,6 @@ import {
 } from 'wagmi'
 import { crossTokenDetails } from '@components/Modals/DepositModal/DepositForm'
 import { GLIDE_CONFIG as glideConfig } from '@constants/glide'
-import { useEthPriceInUsd } from '@hooks/useEthPrice'
 
 // export function getEthPrice(
 //   nativePrice: string,

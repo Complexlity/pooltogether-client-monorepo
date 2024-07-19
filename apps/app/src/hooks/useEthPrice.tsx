@@ -2,7 +2,10 @@ import { NETWORK, USDC_TOKEN_ADDRESSES } from '@generationsoftware/hyperstructur
 import { useTokenPrices } from '@generationsoftware/hyperstructure-react-hooks'
 import { useMemo } from 'react'
 
-export const useEthPriceInUsd = () => {
+export function useEthPriceInUsd(): {
+  [address: `0x${string}`]: number
+  data: number | undefined
+} {
   const tokenPrices = useTokenPrices(NETWORK.mainnet, [USDC_TOKEN_ADDRESSES[NETWORK.mainnet]])
 
   const usdcPrice = useMemo(() => {

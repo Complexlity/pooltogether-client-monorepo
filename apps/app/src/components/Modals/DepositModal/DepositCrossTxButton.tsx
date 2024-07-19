@@ -1,23 +1,18 @@
 import { Vault } from '@generationsoftware/hyperstructure-client-js'
 import {
-  useSendApproveTransaction,
-  useSendDepositTransaction,
-  useTokenAllowance,
-  useTokenBalance,
   useUserVaultDelegationBalance,
   useUserVaultTokenBalance,
   useVaultBalance,
   useVaultTokenData
 } from '@generationsoftware/hyperstructure-react-hooks'
 import { useAddRecentTransaction, useChainModal, useConnectModal } from '@rainbow-me/rainbowkit'
-import { ApprovalTooltip, TransactionButton } from '@shared/react-components'
+import { TransactionButton } from '@shared/react-components'
 import { Button } from '@shared/ui'
-import { isValidVaultList } from '@shared/utilities'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAtomValue } from 'jotai'
 import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
-import { Address, parseUnits, TransactionReceipt } from 'viem'
+import { Address, TransactionReceipt } from 'viem'
 import { useAccount } from 'wagmi'
 import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
 import { DepositModalView } from '.'

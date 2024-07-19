@@ -377,22 +377,17 @@ export const DepositForm = (props: DepositFormProps) => {
   const tokenPickerOptions = useMemo(() => {
     const getOptionId = (option: Token) => `zapToken-${option.chainId}-${option.address}`
 
-    let options = zapTokenOptions
-      .filter((option) => {
-        return true
-        // return option.value > 0
+    let options = zapTokenOptions.map(
+      (tokenOption): DropdownItem => ({
+        id: getOptionId(tokenOption),
+        content: <TokenPickerOption token={tokenOption} />,
+        onClick: () => {
+          setFormDepositChainId(undefined)
+          setFormCrossChainDetails(undefined)
+          setFormTokenAddress(tokenOption.address)
+        }
       })
-      .map(
-        (tokenOption): DropdownItem => ({
-          id: getOptionId(tokenOption),
-          content: <TokenPickerOption token={tokenOption} />,
-          onClick: () => {
-            setFormDepositChainId(undefined)
-            setFormCrossChainDetails(undefined)
-            setFormTokenAddress(tokenOption.address)
-          }
-        })
-      )
+    )
     //   let options = zapTokenOptions
     //     .filter(tokenOption => {
     //       tokenOption.value > 0)
@@ -437,29 +432,21 @@ export const DepositForm = (props: DepositFormProps) => {
     const currentOptions = crossZapTokenOptions[depositChainId!]
 
     if (!currentOptions) return null
-    let options = currentOptions
-      .filter((option) => {
-        return true
-        // return option.value > 0
+    let options = currentOptions.map(
+      (crossTokenOption): DropdownItem => ({
+        id: crossTokenOption.paymentCurrency,
+        content: (
+          <BasicTokenPickerOption token={crossTokenOption} key={crossTokenOption.paymentCurrency} />
+        ),
+        onClick: () => {
+          setFormTokenAddress(undefined)
+          setFormCrossChainDetails({
+            chainId: depositChainId!,
+            eipAddress: crossTokenOption.paymentCurrency as string
+          })
+        }
       })
-      .map(
-        (crossTokenOption): DropdownItem => ({
-          id: crossTokenOption.paymentCurrency,
-          content: (
-            <BasicTokenPickerOption
-              token={crossTokenOption}
-              key={crossTokenOption.paymentCurrency}
-            />
-          ),
-          onClick: () => {
-            setFormTokenAddress(undefined)
-            setFormCrossChainDetails({
-              chainId: depositChainId!,
-              eipAddress: crossTokenOption.paymentCurrency as string
-            })
-          }
-        })
-      )
+    )
 
     return options
   }, [crossZapTokenOptions, depositChainId, vaultToken, vaultTokenWithAmount])
