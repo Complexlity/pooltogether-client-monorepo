@@ -6,7 +6,7 @@ if (!projectId) throw new Error('Glide project Id missing from .env')
 
 const GLIDE_CONFIG: Config<readonly Chain[]> = createGlideConfig({
   projectId: projectId,
-  chains: [chains.base, chains.optimism]
+  chains: [chains.base, chains.optimism, chains.arbitrum]
 })
 
 export { GLIDE_CONFIG }
