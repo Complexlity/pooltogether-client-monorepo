@@ -599,7 +599,7 @@ interface TokenPickerOptionProps {
   className?: string
 }
 interface BasicTokenPickerOptionProps {
-  token: PaymentOption
+  token: PaymentOption & { decimals: number }
   className?: string
 }
 
@@ -657,7 +657,12 @@ const BasicTokenPickerOption = (props: BasicTokenPickerOptionProps) => {
           {token.currencySymbol}
         </span>
       </span>
-      <span className='text-sm text-gray-300 md:text-lg md:text-gray-700'>{token.balance}</span>
+      <span className='text-sm text-gray-300 md:text-lg md:text-gray-700'>
+        {getRoundedDownFormattedTokenAmount(
+          parseUnits(token.balance, token.decimals),
+          token.decimals
+        )}
+      </span>
     </div>
   )
 }
