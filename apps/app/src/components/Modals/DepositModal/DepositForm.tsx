@@ -199,7 +199,8 @@ export const DepositForm = (props: DepositFormProps) => {
     vault
   )
 
-  const { data: crossZapTokenOptions } = useCrossZapTokenOptions(vault, userAddress!)
+  const { data: crossZapTokenOptions, isLoading: isLoadingCrossZapTokenOptions } =
+    useCrossZapTokenOptions(vault, userAddress!)
 
   const isZapping =
     !!vaultToken && !!formTokenAddress && lower(vaultToken.address) !== lower(formTokenAddress)
@@ -453,7 +454,6 @@ export const DepositForm = (props: DepositFormProps) => {
 
   const depositTabHeader: ReactNode = (() => {
     const crossItems = Object.keys(crossZapTokenOptions ?? []).map((item) => Number(item))
-    if (crossItems.length == 0) return null
     const availableItems = [vault.chainId, ...crossItems]
     return (
       <div className='flex items-center justify-center gap-4 py-2'>
@@ -468,6 +468,11 @@ export const DepositForm = (props: DepositFormProps) => {
             <NetworkIcon chainId={item} />
           </button>
         ))}
+        {isLoadingCrossZapTokenOptions && (
+          <div className='flex items-center justify-center'>
+            <Spinner className='w-12 h-12' />
+          </div>
+        )}
       </div>
     )
   })()
