@@ -86,10 +86,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
 
   const formTokenAmount = useAtomValue(depositFormTokenAmountAtom)
 
-  //@ts-expect-error
-  const isValidFormTokenAmount = isValidFormInput(formTokenAmount, crossTokenDetails.decimals)
-
-  const depositEnabled = crossTokenDetails.balance >= formTokenAmount && isValidFormTokenAmount
+  const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount)
 
   // const {
   //   isWaiting: isWaitingApproval,
