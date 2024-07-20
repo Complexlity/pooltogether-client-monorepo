@@ -109,7 +109,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     isConfirming: isConfirmingDeposit,
     isSuccess: isSuccessfulDeposit,
     txHash: depositTxHash,
-    txReceipt,
+
     sendDepositTransaction
   } = useCrossSendDepositTransaction(formTokenAmount, vault, crossTokenDetails, {
     onSend: () => {

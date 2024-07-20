@@ -1,8 +1,6 @@
+import { Spinner } from '@shared/ui'
 import React from 'react'
 import { useAccount, useSwitchChain } from 'wagmi'
-import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
-import { useCrossZapTokenOptions } from '@hooks/glide/useCrossZapTokenOptions'
-import { useVault } from '../../../../../../packages/hyperstructure-react-hooks/dist'
 
 type buttonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 
@@ -25,10 +23,6 @@ function getNiceNetworkNameByChainId(chainId: number) {
     default:
       return 'Arbitrum'
   }
-}
-
-function Spinner() {
-  return <span>Loading...</span>
 }
 
 export const Transactionbutton = (props: TransactionbuttonProps) => {

@@ -117,6 +117,12 @@ export const useCrossSendDepositTransaction = (
 
   const isError = isSendingError || isConfirmingError
 
+  useEffect(() => {
+    if (isError) {
+      options?.onError?.()
+    }
+  }, [isError])
+
   return { isWaiting, isConfirming, txReceipt, isSuccess, isError, txHash, sendDepositTransaction }
 }
 
