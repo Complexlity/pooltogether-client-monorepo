@@ -17,7 +17,6 @@ import { useAccount } from 'wagmi'
 import { useCrossCreateSessionTransaction } from '@hooks/glide/useCrossCreateSessionButton'
 import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
 import { DepositModalView } from '.'
-import { isValidFormInput } from '../TxFormInput'
 import { crossTokenDetails, depositFormTokenAmountAtom } from './DepositForm'
 
 interface DepositTxButtonProps {
@@ -89,19 +88,6 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
 
   const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount)
 
-  // const {
-  //   isWaiting: isWaitingApproval,
-  //   isConfirming: isConfirmingApproval,
-  //   isSuccess: isSuccessfulApproval,
-  //   txHash: approvalTxHash,
-  //   sendApproveTransaction: sendApproveTransaction
-  // } = useSendApproveTransaction(depositAmount, vault, {
-  //   onSuccess: () => {
-  //     refetchTokenAllowance()
-  //     onSuccessfulApproval?.()
-  //   }
-  // })
-
   const { isCreateSessionError, isCreatingSession, session, createSessionTransaction } =
     useCrossCreateSessionTransaction(formTokenAmount, vault, crossTokenDetails, {
       onSuccess: () => {
@@ -122,11 +108,9 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
       setModalView('waiting')
     },
     onSuccess: (txReceipt) => {
-      // refetchUserTokenBalance()
       refetchUserVaultTokenBalance()
       refetchUserVaultDelegationBalance()
       refetchVaultBalance()
-      // refetchTokenAllowance()
       refetchUserBalances?.()
       onSuccessfulDeposit?.(vault.chainId, txReceipt)
       queryClient.invalidateQueries({
