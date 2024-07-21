@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 import { Address, TransactionReceipt } from 'viem'
 import { useAccount } from 'wagmi'
+import { useCrossCreateSessionTransaction } from '@hooks/glide/useCrossCreateSessionButton'
 import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
 import { DepositModalView } from '.'
 import { isValidFormInput } from '../TxFormInput'
@@ -101,6 +102,14 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   //   }
   // })
 
+  const { isCreateSessionError, isCreatingSession, session, createSessionTransaction } =
+    useCrossCreateSessionTransaction(formTokenAmount, vault, crossTokenDetails, {
+      onSuccess: () => {
+        setModalView('review')
+      },
+      onError: () => {}
+    })
+
   const {
     isWaiting: isWaitingDeposit,
     isConfirming: isConfirmingDeposit,
@@ -108,7 +117,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     txHash: depositTxHash,
 
     sendDepositTransaction
-  } = useCrossSendDepositTransaction(formTokenAmount, vault, crossTokenDetails, {
+  } = useCrossSendDepositTransaction(session, vault, crossTokenDetails, {
     onSend: () => {
       setModalView('waiting')
     },
@@ -138,7 +147,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   }, [depositTxHash, isConfirmingDeposit])
 
   // No deposit amount set
-  if (formTokenAmount === '0') {
+  if (formTokenAmount === '0' || !formTokenAmount) {
     return (
       <Button color='transparent' fullSized={true} disabled={true}>
         {t_modals('enterAnAmount')}
@@ -149,13 +158,23 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   // Prompt to review deposit
   if (modalView === 'main') {
     return (
-      <Button onClick={() => setModalView('review')} fullSized={true} disabled={!depositEnabled}>
+      <TransactionButton
+        // shouldNotTriggerSwitching={true}
+        chainId={crossTokenDetails.chainId}
+        isTxSuccess={!!session}
+        isTxLoading={isCreatingSession}
+        write={createSessionTransaction}
+        fullSized={true}
+        disabled={!depositEnabled}
+        openConnectModal={openConnectModal}
+        openChainModal={openChainModal}
+        intl={{ base: t_modals, common: t_common }}
+      >
         {t_modals('reviewDeposit')}
-      </Button>
+      </TransactionButton>
     )
   }
 
-  // Deposit button
   return (
     <TransactionButton
       chainId={crossTokenDetails.chainId}
@@ -165,7 +184,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
       txHash={depositTxHash}
       txDescription={t_modals('depositTx', { symbol: tokenData?.symbol ?? '?' })}
       fullSized={true}
-      disabled={!depositEnabled}
+      disabled={!depositEnabled || !session}
       openConnectModal={openConnectModal}
       openChainModal={openChainModal}
       addRecentTransaction={addRecentTransaction}

@@ -114,7 +114,7 @@ export const DepositModal = (props: DepositModalProps) => {
     setView('main')
     setFormTokenAddress(undefined)
     setFormCrossChainDetails(undefined)
-    setFormTokenAmount('')
+    setFormTokenAmount('0')
     setFormShareAmount('')
   }
 

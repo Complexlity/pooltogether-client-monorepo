@@ -176,7 +176,7 @@ export const DepositForm = (props: DepositFormProps) => {
     setFormTokenAddress(undefined)
     setFormDepositChainId(undefined)
     setFormCrossChainDetails(undefined)
-    setFormTokenAmount('')
+    setFormTokenAmount('0')
     setFormShareAmount('')
     setPriceImpact(undefined)
     setMinReceived(undefined)

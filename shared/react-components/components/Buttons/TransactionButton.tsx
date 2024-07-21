@@ -9,6 +9,7 @@ export interface TransactionButtonProps extends Omit<ButtonProps, 'onClick'> {
   chainId: number
   isTxLoading: boolean
   isTxSuccess: boolean
+  shouldNotTriggerSwitching?: boolean
   write?: () => void
   txHash?: string
   txDescription?: string
@@ -23,6 +24,7 @@ export const TransactionButton = (props: TransactionButtonProps) => {
   const {
     chainId,
     isTxLoading,
+    shouldNotTriggerSwitching,
     isTxSuccess,
     write,
     txHash,
@@ -60,7 +62,7 @@ export const TransactionButton = (props: TransactionButtonProps) => {
         </span>
       </Button>
     )
-  } else if (chain?.id !== chainId) {
+  } else if (chain?.id !== chainId && !shouldNotTriggerSwitching) {
     return (
       <Button
         onClick={() =>
