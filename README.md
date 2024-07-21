@@ -15,9 +15,9 @@
 
 This fork of the pool together monorepo integrates with [paywithglide](https://paywithglide.xyz/) to enable cross chain payments into the pool protocol.
 
-In the [main app](cabana.fi), you're able to deposit with the vault native token as well as zap from other tokens on the same chain as the vault.
+In the [main app](cabana.fi), you're able to deposit with the vault native token as well as zap from other tokens. However you can only zap from tokens on the same chain as the vault.
 
-With this upgrade, you can now also zap from other chain tokens into the vault.
+With this upgrade, you can now also zap from other chains into the vault.
 
 ## HoW To Test
 
