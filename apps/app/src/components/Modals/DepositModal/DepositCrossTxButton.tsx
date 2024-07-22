@@ -7,14 +7,14 @@ import {
 } from '@generationsoftware/hyperstructure-react-hooks'
 import { useAddRecentTransaction, useChainModal, useConnectModal } from '@rainbow-me/rainbowkit'
 import { TransactionButton } from '@shared/react-components'
-import { Button } from '@shared/ui'
+import { Button, Spinner } from '@shared/ui'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAtomValue } from 'jotai'
+import { atom, useAtom, useAtomValue } from 'jotai'
 import { useTranslations } from 'next-intl'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Address, TransactionReceipt } from 'viem'
 import { useAccount } from 'wagmi'
-import { useCrossCreateSessionTransaction } from '@hooks/glide/useCrossCreateSessionButton'
+import { useCreateSessionAtIntervals } from '@hooks/glide/useCreateSessionAtIntervals'
 import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
 import { DepositModalView } from '.'
 import { crossTokenDetails, depositFormTokenAmountAtom } from './DepositForm'
@@ -30,6 +30,7 @@ interface DepositTxButtonProps {
   onSuccessfulDeposit?: (chainId: number, txReceipt: TransactionReceipt) => void
 }
 
+const loadingSessionAtom = atom<boolean>(false)
 export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const {
     vault,
@@ -51,26 +52,10 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const { openChainModal } = useChainModal()
   const addRecentTransaction = useAddRecentTransaction()
 
+  const [loadingSession, setLoadingSession] = useAtom(loadingSessionAtom)
   const { address: userAddress, chain, isDisconnected } = useAccount()
 
   const { data: tokenData } = useVaultTokenData(vault)
-
-  // const {
-  //   data: allowance,
-  //   isFetched: isFetchedAllowance,
-  //   refetch: refetchTokenAllowance
-  // } = useTokenAllowance(
-  //   vault.chainId,
-  //   userAddress as Address,
-  //   vault.address,
-  //   tokenData?.address as Address
-  // )
-
-  // const {
-  //   data: userTokenBalance,
-  //   isFetched: isFetchedUserTokenBalance,
-  //   refetch: refetchUserTokenBalance
-  // } = useTokenBalance(vault.chainId, userAddress as Address, tokenData?.address as Address)
 
   const { refetch: refetchUserVaultTokenBalance } = useUserVaultTokenBalance(
     vault,
@@ -88,40 +73,56 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
 
   const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount)
 
-  const { isCreateSessionError, isCreatingSession, session, createSessionTransaction } =
-    useCrossCreateSessionTransaction(formTokenAmount, vault, crossTokenDetails, {
-      onSuccess: () => {
-        setModalView('review')
-      },
-      onError: () => {}
-    })
+  const { isCreateSessionError, isCreatingSession, session, isCreatingSessionSuccess } =
+    useCreateSessionAtIntervals(loadingSession, formTokenAmount, vault, crossTokenDetails)
 
+  useEffect(() => {
+    setModalView('main')
+  }, [])
+
+  useEffect(() => {
+    if (!!isCreateSessionError && !isCreatingSession) {
+      setLoadingSession(false)
+    }
+  }, [isCreateSessionError])
+  useEffect(() => {
+    if (!!isCreatingSessionSuccess && !isCreatingSession) {
+      setModalView('review')
+    }
+  }, [isCreatingSessionSuccess])
+
+  const sessionTransaction = useCrossSendDepositTransaction(
+    session,
+    formTokenAmount,
+    vault,
+    crossTokenDetails,
+    {
+      onSend: () => {
+        setModalView('waiting')
+      },
+      onSuccess: (txReceipt) => {
+        refetchUserVaultTokenBalance()
+        refetchUserVaultDelegationBalance()
+        refetchVaultBalance()
+        refetchUserBalances?.()
+        onSuccessfulDeposit?.(vault.chainId, txReceipt)
+        queryClient.invalidateQueries({
+          queryKey: ['crossZapOptions']
+        })
+        setModalView('success')
+      },
+      onError: () => {
+        setModalView('error')
+      }
+    }
+  )
   const {
     isWaiting: isWaitingDeposit,
     isConfirming: isConfirmingDeposit,
     isSuccess: isSuccessfulDeposit,
     txHash: depositTxHash,
-
     sendDepositTransaction
-  } = useCrossSendDepositTransaction(session, vault, crossTokenDetails, {
-    onSend: () => {
-      setModalView('waiting')
-    },
-    onSuccess: (txReceipt) => {
-      refetchUserVaultTokenBalance()
-      refetchUserVaultDelegationBalance()
-      refetchVaultBalance()
-      refetchUserBalances?.()
-      onSuccessfulDeposit?.(vault.chainId, txReceipt)
-      queryClient.invalidateQueries({
-        queryKey: ['crossZapOptions']
-      })
-      setModalView('success')
-    },
-    onError: () => {
-      setModalView('error')
-    }
-  })
+  } = sessionTransaction
 
   useEffect(() => {
     if (!!depositTxHash && isConfirmingDeposit && !isWaitingDeposit && !isSuccessfulDeposit) {
@@ -130,7 +131,6 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     }
   }, [depositTxHash, isConfirmingDeposit])
 
-  // No deposit amount set
   if (formTokenAmount === '0' || !formTokenAmount) {
     return (
       <Button color='transparent' fullSized={true} disabled={true}>
@@ -139,36 +139,34 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     )
   }
 
+  // No deposit amount set
+
   // Prompt to review deposit
-  if (modalView === 'main') {
+  if (modalView === 'main' || !loadingSession) {
+    if (loadingSession) {
+      return (
+        <Button fullSized={true} disabled={true}>
+          <Spinner />
+        </Button>
+      )
+    }
     return (
-      <TransactionButton
-        // shouldNotTriggerSwitching={true}
-        chainId={crossTokenDetails.chainId}
-        isTxSuccess={!!session}
-        isTxLoading={isCreatingSession}
-        write={createSessionTransaction}
-        fullSized={true}
-        disabled={!depositEnabled}
-        openConnectModal={openConnectModal}
-        openChainModal={openChainModal}
-        intl={{ base: t_modals, common: t_common }}
-      >
+      <Button fullSized={true} onClick={() => setLoadingSession(true)}>
         {t_modals('reviewDeposit')}
-      </TransactionButton>
+      </Button>
     )
   }
 
   return (
     <TransactionButton
       chainId={crossTokenDetails.chainId}
-      isTxLoading={isWaitingDeposit || isConfirmingDeposit}
+      isTxLoading={!session || isCreatingSession || isWaitingDeposit || isConfirmingDeposit}
       isTxSuccess={isSuccessfulDeposit}
       write={sendDepositTransaction}
       txHash={depositTxHash}
       txDescription={t_modals('depositTx', { symbol: tokenData?.symbol ?? '?' })}
       fullSized={true}
-      disabled={!depositEnabled || !session}
+      disabled={!depositEnabled || !session || isCreatingSession}
       openConnectModal={openConnectModal}
       openChainModal={openChainModal}
       addRecentTransaction={addRecentTransaction}

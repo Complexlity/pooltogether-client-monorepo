@@ -1,9 +1,10 @@
-import { Vault } from '@generationsoftware/hyperstructure-client-js'
-import { executeSession, Session } from '@paywithglide/glide-js'
+import { Vault, vaultABI } from '@generationsoftware/hyperstructure-client-js'
+import { CAIP19, createSession, executeSession, Session } from '@paywithglide/glide-js'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { TransactionReceipt } from 'viem'
+import { Address, parseUnits, TransactionReceipt } from 'viem'
 import {
+  useAccount,
   useSendTransaction,
   useSignTypedData,
   useSwitchChain,
@@ -21,6 +22,7 @@ import { GLIDE_CONFIG as glideConfig } from '@constants/glide'
  */
 export const useCrossSendDepositTransaction = (
   session: Session | undefined,
+  amount: string,
   vault: Vault,
   crossTokenDetails: crossTokenDetails,
 
@@ -30,9 +32,21 @@ export const useCrossSendDepositTransaction = (
     onError?: () => void
   }
 ) => {
+  const { address: userAddress } = useAccount()
+
   const { switchChainAsync } = useSwitchChain()
   const { sendTransactionAsync } = useSendTransaction()
   const { signTypedDataAsync } = useSignTypedData()
+
+  const tokenPriceUsd = Number(crossTokenDetails.balanceUSD) / Number(crossTokenDetails.balance)
+  let vaultDecimals = vault.decimals
+  if (!vaultDecimals) {
+    console.log('Vault Decimals missing...')
+    vaultDecimals = 6
+  }
+
+  let depositAmount = parseUnits(`${tokenPriceUsd * Number(amount)}`, vaultDecimals)
+
   const {
     mutate: sendDepositTransaction,
     data: txHash,
@@ -40,8 +54,8 @@ export const useCrossSendDepositTransaction = (
     isError: isSendingError
   } = useMutation({
     mutationFn: async () => {
-      if (!session) throw new Error('No session created...')
       const { sponsoredTransactionHash: txHash } = await executeSession(glideConfig, {
+        //@ts-expect-error
         session,
         currentChainId: crossTokenDetails.chainId,
         switchChainAsync,

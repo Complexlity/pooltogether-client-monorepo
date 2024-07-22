@@ -1,11 +1,12 @@
 import { Vault, vaultABI } from '@generationsoftware/hyperstructure-client-js'
 import { CAIP19, createSession } from '@paywithglide/glide-js'
-import { useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Address, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
 import { crossTokenDetails } from '@components/Modals/DepositModal/DepositForm'
 import { GLIDE_CONFIG as glideConfig } from '@constants/glide'
 
+const GLIDE_SESSION_REFETCH_INTERVAL = 2 * 60 * 1000
 /**
  * Prepares and submits a `deposit` transaction to a vault
  * @param amount the amount to deposit
@@ -13,16 +14,11 @@ import { GLIDE_CONFIG as glideConfig } from '@constants/glide'
  * @param options optional callbacks
  * @returns
  */
-export const useCrossCreateSessionTransaction = (
+export const useCreateSessionAtIntervals = (
+  loadingSession: boolean,
   amount: string,
   vault: Vault,
-  crossTokenDetails: crossTokenDetails,
-
-  options?: {
-    onSend?: (txHash: `0x${string}`) => void
-    onSuccess?: () => void
-    onError?: () => void
-  }
+  crossTokenDetails: crossTokenDetails
 ) => {
   const { address: userAddress } = useAccount()
 
@@ -35,13 +31,17 @@ export const useCrossCreateSessionTransaction = (
 
   let depositAmount = parseUnits(`${tokenPriceUsd * Number(amount)}`, vaultDecimals)
 
-  const {
-    mutate: createSessionTransaction,
-    data,
-    isPending: isCreatingSession,
-    isError: isCreateSessionError
-  } = useMutation({
-    mutationFn: async () => {
+  let {
+    data: session,
+    isFetching,
+    isLoading,
+    isPending,
+    isRefetching,
+    isError: isCreateSessionError,
+    isSuccess: isCreatingSessionSuccess
+  } = useQuery({
+    queryKey: [`glideSession`],
+    queryFn: async () => {
       const parameters = {
         chainId: vault.chainId,
         account: userAddress as Address,
@@ -53,13 +53,12 @@ export const useCrossCreateSessionTransaction = (
       }
 
       const session = await createSession(glideConfig, parameters)
-      return { session, timeStamp: Date.now() }
+      return session
     },
-    onSuccess: () => {
-      options?.onSuccess?.()
-    },
-    onError: () => {}
+    enabled: loadingSession,
+    refetchInterval: GLIDE_SESSION_REFETCH_INTERVAL
   })
 
-  return { isCreatingSession, isCreateSessionError, data, createSessionTransaction }
+  const isCreatingSession = isFetching || isPending || isLoading || isRefetching
+  return { isCreatingSession, isCreateSessionError, session, isCreatingSessionSuccess }
 }
