@@ -25,7 +25,6 @@ export const useCreateSessionAtIntervals = (
   const tokenPriceUsd = Number(crossTokenDetails.balanceUSD) / Number(crossTokenDetails.balance)
   let vaultDecimals = vault.decimals
   if (!vaultDecimals) {
-    console.log('Vault Decimals missing...')
     vaultDecimals = 6
   }
 

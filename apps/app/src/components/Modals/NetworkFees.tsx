@@ -237,7 +237,6 @@ interface TXFeeEstimateProps {
 
 const TXFeeEstimate = (props: TXFeeEstimateProps) => {
   const { name, chainId, tx, gasAmount } = props
-  console.log({ name })
 
   const { data: gasEstimates, isFetched: isFetchedGasEstimates } = useGasCostEstimates(
     chainId,

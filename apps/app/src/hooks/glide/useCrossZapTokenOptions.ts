@@ -17,7 +17,7 @@ export const getChainIdFromString = (stringChainId: `eip155:${number}`) => {
 export function useCrossZapTokenOptions(vault: Vault, userAddress: Address) {
   const depositAmount = parseUnits(DEFAULT_DEPOSIT_AMOUNT, 6)
   return useQuery({
-    queryKey: ['crossZapOptions'],
+    queryKey: ['crossZapOptions', vault.address],
     queryFn: async () => {
       const paymentOptions = await listPaymentOptions(GLIDE_CONFIG, {
         chainId: vault.chainId,
