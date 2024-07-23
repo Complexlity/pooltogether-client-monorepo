@@ -5,11 +5,12 @@ import {
   useVaultBalance,
   useVaultTokenData
 } from '@generationsoftware/hyperstructure-react-hooks'
+import { Session } from '@paywithglide/glide-js'
 import { useAddRecentTransaction, useChainModal, useConnectModal } from '@rainbow-me/rainbowkit'
 import { TransactionButton } from '@shared/react-components'
 import { Button, Spinner } from '@shared/ui'
 import { useQueryClient } from '@tanstack/react-query'
-import { atom, useAtom, useAtomValue } from 'jotai'
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Address, TransactionReceipt } from 'viem'
@@ -17,7 +18,11 @@ import { useAccount } from 'wagmi'
 import { useCreateSessionAtIntervals } from '@hooks/glide/useCreateSessionAtIntervals'
 import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
 import { DepositModalView } from '.'
-import { crossTokenDetails, depositFormTokenAmountAtom } from './DepositForm'
+import {
+  crossTokenDetails,
+  depositFormShareAmountAtom,
+  depositFormTokenAmountAtom
+} from './DepositForm'
 
 interface DepositTxButtonProps {
   vault: Vault
@@ -30,7 +35,8 @@ interface DepositTxButtonProps {
   onSuccessfulDeposit?: (chainId: number, txReceipt: TransactionReceipt) => void
 }
 
-const loadingSessionAtom = atom<boolean>(false)
+const isLoadingSessionAtom = atom<boolean>(false)
+export const currentCrossingSessionAtom = atom<Session | undefined>(undefined)
 export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const {
     vault,
@@ -52,7 +58,8 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const { openChainModal } = useChainModal()
   const addRecentTransaction = useAddRecentTransaction()
 
-  const [loadingSession, setLoadingSession] = useAtom(loadingSessionAtom)
+  const [isLoadingSession, setIsLoadingSession] = useAtom(isLoadingSessionAtom)
+  const setCurrentSession = useSetAtom(currentCrossingSessionAtom)
   const { address: userAddress, chain, isDisconnected } = useAccount()
 
   const { data: tokenData } = useVaultTokenData(vault)
@@ -74,15 +81,16 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount)
 
   const { isCreateSessionError, isCreatingSession, session, isCreatingSessionSuccess } =
-    useCreateSessionAtIntervals(loadingSession, formTokenAmount, vault, crossTokenDetails)
+    useCreateSessionAtIntervals(isLoadingSession, formTokenAmount, vault, crossTokenDetails)
 
   useEffect(() => {
     setModalView('main')
+    setIsLoadingSession(false)
   }, [])
 
   useEffect(() => {
     if (!!isCreateSessionError && !isCreatingSession) {
-      setLoadingSession(false)
+      setIsLoadingSession(false)
     }
   }, [isCreateSessionError])
   useEffect(() => {
@@ -90,6 +98,11 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
       setModalView('review')
     }
   }, [isCreatingSessionSuccess])
+  useEffect(() => {
+    if (!!session && !isCreatingSession) {
+      setCurrentSession(session)
+    }
+  }, [session])
 
   const sessionTransaction = useCrossSendDepositTransaction(
     session,
@@ -142,8 +155,9 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   // No deposit amount set
 
   // Prompt to review deposit
-  if (modalView === 'main' || !loadingSession) {
-    if (loadingSession) {
+  console.log({ isLoadingSession })
+  if (modalView === 'main' || !isLoadingSession) {
+    if (isLoadingSession) {
       return (
         <Button fullSized={true} disabled={true}>
           <Spinner />
@@ -151,7 +165,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
       )
     }
     return (
-      <Button fullSized={true} onClick={() => setLoadingSession(true)}>
+      <Button fullSized={true} onClick={() => setIsLoadingSession(true)}>
         {t_modals('reviewDeposit')}
       </Button>
     )

@@ -53,9 +53,10 @@ export const useCreateSessionAtIntervals = (
       }
 
       const session = await createSession(glideConfig, parameters)
+
       return session
     },
-    enabled: loadingSession,
+    enabled: !!loadingSession,
     refetchInterval: GLIDE_SESSION_REFETCH_INTERVAL
   })
 
