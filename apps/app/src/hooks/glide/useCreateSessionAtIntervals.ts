@@ -56,7 +56,8 @@ export const useCreateSessionAtIntervals = (
       return session
     },
     enabled: !!loadingSession,
-    refetchInterval: GLIDE_SESSION_REFETCH_INTERVAL
+    refetchInterval: GLIDE_SESSION_REFETCH_INTERVAL,
+    retry: false
   })
 
   const isCreatingSession = isFetching || isPending || isLoading || isRefetching
