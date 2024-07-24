@@ -9,11 +9,19 @@ import { Session } from '@paywithglide/glide-js'
 import { useAddRecentTransaction, useChainModal, useConnectModal } from '@rainbow-me/rainbowkit'
 import { TransactionButton } from '@shared/react-components'
 import { Button, Spinner } from '@shared/ui'
+import { vaultABI } from '@shared/utilities'
 import { useQueryClient } from '@tanstack/react-query'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
-import { Address, TransactionReceipt } from 'viem'
+import { getRoundedDownFormattedTokenAmount } from 'src/utils'
+import {
+  Address,
+  decodeAbiParameters,
+  decodeFunctionData,
+  formatUnits,
+  TransactionReceipt
+} from 'viem'
 import { useAccount } from 'wagmi'
 import { useCreateSessionAtIntervals } from '@hooks/glide/useCreateSessionAtIntervals'
 import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
@@ -60,6 +68,8 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
 
   const [isLoadingSession, setIsLoadingSession] = useAtom(isLoadingSessionAtom)
   const setCurrentSession = useSetAtom(currentCrossingSessionAtom)
+  const setFormShareAmount = useSetAtom(depositFormShareAmountAtom)
+
   const { address: userAddress, chain, isDisconnected } = useAccount()
 
   const { data: tokenData } = useVaultTokenData(vault)
@@ -168,6 +178,15 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
         {t_modals('reviewDeposit')}
       </Button>
     )
+  }
+
+  if (session?.sponsoredTransaction?.input) {
+    const values = decodeFunctionData({ abi: vaultABI, data: session.sponsoredTransaction.input })
+
+    if (vault.decimals && typeof values.args[0] === 'bigint') {
+      const amount = getRoundedDownFormattedTokenAmount(values.args[0], vault.decimals)
+      setFormShareAmount(amount)
+    }
   }
 
   return (
