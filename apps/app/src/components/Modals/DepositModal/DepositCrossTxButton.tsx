@@ -87,8 +87,10 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const { refetch: refetchVaultBalance } = useVaultBalance(vault)
 
   const formTokenAmount = useAtomValue(depositFormTokenAmountAtom)
+  console.log({formTokenAmount})
 
   const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount)
+  console.log({depositEnabled})
 
   const { isCreateSessionError, isCreatingSession, session, isCreatingSessionSuccess } =
     useCreateSessionAtIntervals(isLoadingSession, formTokenAmount, vault, crossTokenDetails)
@@ -165,6 +167,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   // No deposit amount set
 
   // Prompt to review deposit
+  console.log(modalView, isLoadingSession)
   if (modalView === 'main' || !isLoadingSession) {
     if (isLoadingSession) {
       return (
@@ -174,7 +177,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
       )
     }
     return (
-      <Button fullSized={true} onClick={() => setIsLoadingSession(true)}>
+      <Button fullSized={true} disabled={!depositEnabled} onClick={() => setIsLoadingSession(true)}>
         {t_modals('reviewDeposit')}
       </Button>
     )
@@ -188,6 +191,7 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
       setFormShareAmount(amount)
     }
   }
+
 
   return (
     <TransactionButton
