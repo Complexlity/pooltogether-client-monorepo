@@ -29,7 +29,8 @@ import { DepositModalView } from '.'
 import {
   crossTokenDetails,
   depositFormShareAmountAtom,
-  depositFormTokenAmountAtom
+  depositFormTokenAmountAtom,
+  isLoadingSessionAtom
 } from './DepositForm'
 
 interface DepositTxButtonProps {
@@ -43,7 +44,7 @@ interface DepositTxButtonProps {
   onSuccessfulDeposit?: (chainId: number, txReceipt: TransactionReceipt) => void
 }
 
-const isLoadingSessionAtom = atom<boolean>(false)
+
 export const currentCrossingSessionAtom = atom<Session | undefined>(undefined)
 export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const {

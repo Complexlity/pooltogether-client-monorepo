@@ -33,7 +33,7 @@ import {
   lower
 } from '@shared/utilities'
 import classNames from 'classnames'
-import { atom, useAtom, useSetAtom } from 'jotai'
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useTranslations } from 'next-intl'
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -50,9 +50,11 @@ export const depositZapPriceImpactAtom = atom<number | undefined>(undefined)
 
 export const depositZapMinReceivedAtom = atom<bigint | undefined>(undefined)
 export const depositChainIdAtom = atom<number | undefined>(undefined)
-export const crossingChainDetailsAtom = atom<{ chainId: number; eipAddress: string } | undefined>(
+export const crossingChainDetailsAtom = atom<{ chainId: number; eipAddress: 
+  string } | undefined>(
   undefined
 )
+
 type Prettify<T> = { [K in keyof T]: T[K] } & {}
 export type crossTokenDetails = Prettify<
   | Partial<{
@@ -79,10 +81,12 @@ export type crossTokenDetails = Prettify<
 >
 
 export const crossingTokenDetailsAtom = atom<crossTokenDetails | undefined>(undefined)
+export const isLoadingSessionAtom = atom<boolean>(false)
 export interface DepositFormProps {
   vault: Vault
   showInputInfoRows?: boolean
 }
+
 
 export const DepositForm = (props: DepositFormProps) => {
   const { vault, showInputInfoRows } = props
@@ -164,6 +168,7 @@ export const DepositForm = (props: DepositFormProps) => {
   })
 
   const [formTokenAmount, setFormTokenAmount] = useAtom(depositFormTokenAmountAtom)
+  const isLoadingSession = useAtomValue(isLoadingSessionAtom)
   const setFormShareAmount = useSetAtom(depositFormShareAmountAtom)
 
   const [priceImpact, setPriceImpact] = useAtom(depositZapPriceImpactAtom)
@@ -527,6 +532,7 @@ export const DepositForm = (props: DepositFormProps) => {
     <div className='flex flex-col isolate'>
       <FormProvider {...formMethods}>
         <TxFormInput
+          disabled={isLoadingSession}
           //@ts-expect-error
           token={isCrossing ? crossingTokenInputData : tokenInputData}
           formKey='tokenAmount'
