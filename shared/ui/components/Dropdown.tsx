@@ -52,7 +52,7 @@ export const Dropdown = (props: DropdownProps) => {
               )
             }
           },
-          arrowIcon: 'ml-2 h-4 w-4 stroke-[4]'
+          arrowIcon: 'ml-2 h-8 w-8 stroke-[4]'
         }}
         label={label}
         {...rest}
