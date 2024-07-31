@@ -194,3 +194,16 @@ export const getRoundedDownFormattedTokenAmount = (amount: bigint, decimals: num
 
   return formatNumberForDisplay(roundedAmount, { maximumFractionDigits })
 }
+
+
+export const getRoundedDownAmount = (amount: string) => {
+  const fractionDigits = amount.split('.')[1] ?? ''
+  const numFractionLeadingZeroes = (fractionDigits.match(/^0+/) || [''])[0].length
+  const maximumFractionDigits = Math.max(Math.min(numFractionLeadingZeroes + 1, 4), 3)
+
+  const roundingMultiplier = 10 ** maximumFractionDigits
+  const roundedAmount =
+    Math.floor(parseFloat(amount) * roundingMultiplier) / roundingMultiplier
+
+  return formatNumberForDisplay(roundedAmount, { maximumFractionDigits })
+}

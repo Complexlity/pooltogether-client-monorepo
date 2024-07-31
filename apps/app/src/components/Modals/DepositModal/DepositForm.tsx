@@ -1,3 +1,4 @@
+import { ZAP_SETTINGS } from '@constants/config'
 import { Vault } from '@generationsoftware/hyperstructure-client-js'
 import {
   useSelectedVaults,
@@ -9,6 +10,10 @@ import {
   useVaultSharePrice,
   useVaultTokenPrice
 } from '@generationsoftware/hyperstructure-react-hooks'
+import { useCrossZapTokenOptions } from '@hooks/glide/useCrossZapTokenOptions'
+import { useEthPriceInUsd } from '@hooks/useEthPrice'
+import { useSendDepositZapTransaction } from '@hooks/zaps/useSendDepositZapTransaction'
+import { useZapTokenOptions } from '@hooks/zaps/useZapTokenOptions'
 import { PaymentOption } from '@paywithglide/glide-js'
 import { NetworkIcon, TokenIcon } from '@shared/react-components'
 import {
@@ -32,14 +37,9 @@ import { atom, useAtom, useSetAtom } from 'jotai'
 import { useTranslations } from 'next-intl'
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { getRoundedDownFormattedTokenAmount } from 'src/utils'
+import { getRoundedDownAmount, getRoundedDownFormattedTokenAmount } from 'src/utils'
 import { Address, formatUnits, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
-import { ZAP_SETTINGS } from '@constants/config'
-import { useCrossZapTokenOptions } from '@hooks/glide/useCrossZapTokenOptions'
-import { useEthPriceInUsd } from '@hooks/useEthPrice'
-import { useSendDepositZapTransaction } from '@hooks/zaps/useSendDepositZapTransaction'
-import { useZapTokenOptions } from '@hooks/zaps/useZapTokenOptions'
 import { isValidFormInput, TxFormInput, TxFormValues } from '../TxFormInput'
 
 export const depositFormTokenAddressAtom = atom<Address | undefined>(undefined)
@@ -278,13 +278,12 @@ export const DepositForm = (props: DepositFormProps) => {
         const itemInUsd =
           (Number(tokenAmount) * Number(crossingTokenInputData.balanceUSD)) /
           Number(crossingTokenInputData.balance)
+
         const sharePriceInUsd = share.price * ethToUsdPrice
 
-        const formattedShares = itemInUsd * sharePriceInUsd
-
-        const slicedShares = formattedShares.toFixed(2)
-
-        setFormShareAmount(slicedShares)
+        const formattedShares = itemInUsd / sharePriceInUsd
+        console.log({ formattedShares })
+        const slicedShares = getRoundedDownAmount(formattedShares.toString())
 
         formMethods.setValue('shareAmount', slicedShares, {
           shouldValidate: true
