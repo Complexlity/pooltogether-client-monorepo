@@ -88,10 +88,15 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   const { refetch: refetchVaultBalance } = useVaultBalance(vault)
 
   const formTokenAmount = useAtomValue(depositFormTokenAmountAtom)
-  console.log({formTokenAmount})
 
-  const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount)
-  console.log({depositEnabled})
+
+  const isValidFormInputTokenAmount =
+    !!formTokenAmount &&
+    !Number.isNaN(Number(formTokenAmount)) &&
+    parseFloat(formTokenAmount) > 0 
+  
+  
+  const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount) && isValidFormInputTokenAmount
 
   const { isCreateSessionError, isCreatingSession, session, isCreatingSessionSuccess } =
     useCreateSessionAtIntervals(isLoadingSession, formTokenAmount, vault, crossTokenDetails)
@@ -101,21 +106,18 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     setIsLoadingSession(false)
   }, [])
 
+
   useEffect(() => {
     if (!!isCreateSessionError && !isCreatingSession) {
       setIsLoadingSession(false)
     }
-  }, [isCreateSessionError])
-  useEffect(() => {
-    if (!!isCreatingSessionSuccess && !isCreatingSession) {
+    else if (!!isCreatingSessionSuccess && !isCreatingSession) {
       setModalView('review')
-    }
-  }, [isCreatingSessionSuccess])
-  useEffect(() => {
-    if (!!session && !isCreatingSession) {
       setCurrentSession(session)
     }
-  }, [session])
+  
+  }, [isCreatingSession, isCreateSessionError, isCreatingSessionSuccess, session])
+  
 
   const sessionTransaction = useCrossSendDepositTransaction(
     session,
