@@ -23,9 +23,6 @@ With this upgrade, you can now also zap from other chains into the vault.
 
 - Go to [https://cabana-glide.vercel.app/vaults?network=10](https://cabana-glide.vercel.app/vaults?network=10)
 
-**Update:** 
-- It now supports many more pools including przUSDC Base, przUSDC Arbitrum, przWeth OP, przWETH Arb, przPOOL 0P, przLUSD, przDAI OP. 
-- It also no support more cross chain paying options (previously only Base, Op and Arb) including Ethereum(mainnet), Avalanche, Polygon and Blast
 
 - Connect Your Wallet
 
@@ -33,6 +30,11 @@ With this upgrade, you can now also zap from other chains into the vault.
 
 ![optimism vault png](./op_vault.png)
 
+**Update:**
+1. It now supports many more pools including przUSDC Base, przUSDC Arbitrum, przWeth OP, przWETH Arb, przPOOL 0P, przLUSD, przDAI OP. 
+2. It also no support more cross chain paying options (previously only Base, Op and Arb) including Ethereum(mainnet), Avalanche, Polygon and Blast
+
+<br/>
 - Pick and choose which of the tokens you want to swap with. By default, it only shows tokens you have your wallet. If it shows none, get some tokens first.
 
 ![swap options png](./swap_options.png)
