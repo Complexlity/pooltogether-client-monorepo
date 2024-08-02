@@ -19,9 +19,13 @@ In the [main app](cabana.fi), you're able to deposit with the vault native token
 
 With this upgrade, you can now also zap from other chains into the vault.
 
-## HoW To Test
+## How To Test
 
 - Go to [https://cabana-glide.vercel.app/vaults?network=10](https://cabana-glide.vercel.app/vaults?network=10)
+
+**Update:** 
+- It now supports many more pools including przUSDC Base, przUSDC Arbitrum, przWeth OP, przWETH Arb, przPOOL 0P, przLUSD, przDAI OP. 
+- It also no support more cross chain paying options (previously only Base, Op and Arb) including Ethereum(mainnet), Avalanche, Polygon and Blast
 
 - Connect Your Wallet
 
@@ -34,3 +38,5 @@ With this upgrade, you can now also zap from other chains into the vault.
 ![swap options png](./swap_options.png)
 
 N/B To run this repo locally, follow the [Main Repo Guide](https://github.com/GenerationSoftware/pooltogether-client-monorepo/blob/main/README.md)
+
+

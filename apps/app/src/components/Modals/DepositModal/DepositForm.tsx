@@ -287,7 +287,6 @@ export const DepositForm = (props: DepositFormProps) => {
         const sharePriceInUsd = share.price * ethToUsdPrice
 
         const formattedShares = itemInUsd / sharePriceInUsd
-        console.log({ formattedShares })
         const slicedShares = getRoundedDownAmount(formattedShares.toString())
 
         formMethods.setValue('shareAmount', slicedShares, {
@@ -460,7 +459,7 @@ export const DepositForm = (props: DepositFormProps) => {
     const crossItems = Object.keys(crossZapTokenOptions ?? []).map((item) => Number(item))
     const availableItems = [vault.chainId, ...crossItems]
     return (
-      <div className='flex items-center justify-center gap-4 py-2'>
+      <div className='flex items-center justify-center gap-4 py-2 px-2'>
         {availableItems.map((item) => (
           <button
             key={item}

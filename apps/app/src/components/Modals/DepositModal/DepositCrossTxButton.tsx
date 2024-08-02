@@ -170,7 +170,6 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
   // No deposit amount set
 
   // Prompt to review deposit
-  console.log(modalView, isLoadingSession)
   if (modalView === 'main' || !isLoadingSession) {
     if (isLoadingSession) {
       return (
