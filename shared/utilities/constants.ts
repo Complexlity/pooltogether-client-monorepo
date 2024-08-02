@@ -22,7 +22,8 @@ export enum NETWORK {
   arbitrum = 42161,
   arbitrum_sepolia = 421614,
   base = 8453,
-  base_sepolia = 84532
+  base_sepolia = 84532,
+  blast = 81457
 }
 export type NETWORK_NAME = keyof typeof NETWORK
 
@@ -207,7 +208,8 @@ export const STABLECOINS: Record<NETWORK, { [address: Lowercase<Address>]: strin
   [NETWORK.base_sepolia]: {
     '0x034109d90e70b972617e96b33295e724fff5887a': 'usd', // USDC
     '0xe4b4a71923aecb4b8924bda8c31941a8ab50ff86': 'usd' // DAI
-  }
+  },
+  [NETWORK.blast]: {},
 }
 
 /**
@@ -347,7 +349,14 @@ export const NATIVE_ASSETS: Record<NETWORK, Token> = {
     symbol: 'ETH',
     name: 'Ether',
     decimals: 18
-  }
+  },
+  [NETWORK.blast]: {
+    chainId: NETWORK.blast,
+    address: DOLPHIN_ADDRESS,
+    symbol: 'ETH',
+    name: 'Ether',
+    decimals: 18
+  },
 }
 
 /**
@@ -370,7 +379,8 @@ export const WRAPPED_NATIVE_ASSETS: Record<NETWORK, Lowercase<Address> | null> =
   [NETWORK.arbitrum]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
   [NETWORK.arbitrum_sepolia]: null,
   [NETWORK.base]: '0x4200000000000000000000000000000000000006',
-  [NETWORK.base_sepolia]: null
+  [NETWORK.base_sepolia]: null,
+  [NETWORK.blast]: null
 }
 
 /**
@@ -762,7 +772,8 @@ export const BLOCK_EXPLORERS: Record<NETWORK, { name: string; url: string }> = {
   [NETWORK.arbitrum]: { name: 'Arbiscan', url: 'https://arbiscan.io/' },
   [NETWORK.arbitrum_sepolia]: { name: 'Arbiscan', url: 'https://sepolia.arbiscan.io/' },
   [NETWORK.base]: { name: 'Basescan', url: 'https://basescan.org/' },
-  [NETWORK.base_sepolia]: { name: 'Blockscout', url: 'https://sepolia.basescan.org/' }
+  [NETWORK.base_sepolia]: { name: 'Blockscout', url: 'https://sepolia.basescan.org/' },
+  [NETWORK.blast]: { name: 'Blast Explorer', url: 'https://blastexplorer.io/' },
 }
 
 /**
@@ -806,7 +817,8 @@ export const COINGECKO_NATIVE_TOKEN_IDS: Record<NETWORK, string> = {
   [NETWORK.arbitrum]: 'ethereum',
   [NETWORK.arbitrum_sepolia]: 'ethereum',
   [NETWORK.base]: 'ethereum',
-  [NETWORK.base_sepolia]: 'ethereum'
+  [NETWORK.base_sepolia]: 'ethereum',
+  [NETWORK.blast]: 'ethereum'
 }
 
 /**

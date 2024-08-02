@@ -73,6 +73,7 @@ export const isTestnet = (chainId: number) => {
     [NETWORK.arbitrum]: false,
     [NETWORK.arbitrum_sepolia]: true,
     [NETWORK.base]: false,
+    [NETWORK.blast]: false,
     [NETWORK.base_sepolia]: true
   }
 
@@ -102,6 +103,7 @@ export const isOpStack = (chainId: number) => {
     [NETWORK.arbitrum]: false,
     [NETWORK.arbitrum_sepolia]: false,
     [NETWORK.base]: true,
+    [NETWORK.blast]: false,
     [NETWORK.base_sepolia]: true
   }
 

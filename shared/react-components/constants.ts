@@ -63,6 +63,7 @@ export const TOKEN_LOGO_OVERRIDES: Record<NETWORK, { [address: Lowercase<string>
     '0x0000206329b97db379d5e1bf586bbdb969c63274': tokenLogoUrls.usda,
     '0xe0b52e49357fd4daf2c15e02058dce6bc0057db4': tokenLogoUrls.eura
   },
+  [NETWORK.blast]: {},
   [NETWORK.mumbai]: {},
   [NETWORK.optimism]: {
     [DOLPHIN_ADDRESS]: tokenLogoUrls.eth,

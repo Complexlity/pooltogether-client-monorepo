@@ -29,14 +29,17 @@ import {
   baseSepolia,
   mainnet,
   optimism,
-  optimismSepolia
+  optimismSepolia,
+  polygon,
+  avalanche,
+  blast,
 } from 'viem/chains'
 
 /**
  * Supported networks
  */
 export const SUPPORTED_NETWORKS = {
-  mainnets: [NETWORK.mainnet, NETWORK.optimism, NETWORK.base, NETWORK.arbitrum],
+  mainnets: [NETWORK.mainnet, NETWORK.optimism, NETWORK.base, NETWORK.arbitrum, NETWORK.polygon, NETWORK.avalanche, NETWORK.blast],
   testnets: [NETWORK.optimism_sepolia, NETWORK.arbitrum_sepolia, NETWORK.base_sepolia]
 } as const
 
@@ -48,6 +51,9 @@ export const WAGMI_CHAINS = {
   [NETWORK.optimism]: optimism,
   [NETWORK.arbitrum]: arbitrum,
   [NETWORK.base]: base,
+  [NETWORK.polygon]: polygon,
+  [NETWORK.avalanche]: avalanche,
+  [NETWORK.blast]: blast,
   [NETWORK.optimism_sepolia]: optimismSepolia,
   [NETWORK.arbitrum_sepolia]: arbitrumSepolia,
   [NETWORK.base_sepolia]: baseSepolia
@@ -83,6 +89,9 @@ export const RPC_URLS = {
   [NETWORK.optimism]: process.env.NEXT_PUBLIC_OPTIMISM_RPC_URL,
   [NETWORK.arbitrum]: process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL,
   [NETWORK.base]: process.env.NEXT_PUBLIC_BASE_RPC_URL,
+  [NETWORK.polygon]: process.env.NEXT_PUBLIC_POLYGON_RPC_URL,
+  [NETWORK.blast]: process.env.NEXT_PUBLIC_BLAST_RPC_URL,
+  [NETWORK.avalanche]: process.env.NEXT_PUBLIC_AVALANCHE_RPC_URL,
   [NETWORK.optimism_sepolia]: process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL,
   [NETWORK.arbitrum_sepolia]: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL,
   [NETWORK.base_sepolia]: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL
