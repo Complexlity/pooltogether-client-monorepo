@@ -21,7 +21,7 @@ import { useAccount } from 'wagmi'
 import { ZAP_SETTINGS } from '@constants/config'
 import { zapRouterABI } from '@constants/zapRouterABI'
 import { currentCrossingSessionAtom } from './DepositModal/DepositCrossTxButton'
-import { crossingTokenDetailsAtom, depositFormTokenAmountAtom } from './DepositModal/DepositForm'
+import { crossChainTokenDetailsAtom, depositFormTokenAmountAtom } from './DepositModal/DepositForm'
 
 export interface NetworkFeesProps {
   vault: Vault
@@ -42,8 +42,8 @@ export const NetworkFees = (props: NetworkFeesProps) => {
   const t_modals = useTranslations('TxModals')
 
   const { address: userAddress } = useAccount()
-  const crossingTokenDetails = useAtomValue(crossingTokenDetailsAtom)
-  const isCrossing = crossingTokenDetails
+  const crossChainTokenDetails = useAtomValue(crossChainTokenDetailsAtom)
+  const isCrossing = crossChainTokenDetails
   const currentCrossingSession = useAtomValue(currentCrossingSessionAtom)
   const formTokenAmount = useAtomValue(depositFormTokenAmountAtom)
 

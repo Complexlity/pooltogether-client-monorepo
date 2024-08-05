@@ -10,7 +10,7 @@ import { useFormContext } from 'react-hook-form'
 import { getRoundedDownFormattedTokenAmount } from 'src/utils'
 import { formatUnits } from 'viem'
 import { NATIVE_ASSET_IGNORE_AMOUNT } from '@constants/config'
-import { crossingChainDetailsAtom } from './DepositModal/DepositForm'
+import { crossChainTokenDetailsAtom, crossTokenDetails } from './DepositModal/DepositForm'
 
 export interface TxFormValues {
   tokenAmount: string
@@ -19,6 +19,7 @@ export interface TxFormValues {
 
 export interface TxFormInputProps {
   token?: TokenWithAmount & TokenWithPrice & Partial<TokenWithLogo>
+  crossToken?: crossTokenDetails
   formKey: keyof TxFormValues
   validate?: { [rule: string]: (v: any) => true | string }
   disabled?: boolean
@@ -41,6 +42,7 @@ export interface TxFormInputProps {
 export const TxFormInput = (props: TxFormInputProps) => {
   const {
     token,
+    crossToken,
     formKey,
     validate,
     disabled,
@@ -61,6 +63,7 @@ export const TxFormInput = (props: TxFormInputProps) => {
   } = props
 
   const t = useTranslations('TxModals')
+  const usedToken = !!crossToken ? crossToken : token
 
   const {
     watch,
@@ -70,11 +73,9 @@ export const TxFormInput = (props: TxFormInputProps) => {
 
   const formAmount = watch(formKey, '0')
 
-  const formCrossChainDetails = useAtomValue(crossingChainDetailsAtom)
+  const isCrossing = !!crossToken
 
-  const isCrossing = !!formCrossChainDetails
-
-  if (!token) {
+  if (!usedToken) {
     return (
       <div
         className={classNames(
@@ -95,8 +96,8 @@ export const TxFormInput = (props: TxFormInputProps) => {
   }
 
   const amountValue =
-    isValidFormInput(formAmount, token.decimals) && !!token.price
-      ? Number(formAmount) * token.price
+    isValidFormInput(formAmount, usedToken.decimals) && !!usedToken.price
+      ? Number(formAmount) * usedToken.price
       : 0
 
   const error =
@@ -108,17 +109,17 @@ export const TxFormInput = (props: TxFormInputProps) => {
     let formattedAmount
 
     if (isCrossing) {
-      //@ts-expect-error
-      formattedAmount = token.balance
+      //@ts-expect-error Balance exists if isCrossing
+      formattedAmount = usedToken.balance
     } else {
       const maxAmount =
-        lower(token.address) === DOLPHIN_ADDRESS
-          ? token.amount > NATIVE_ASSET_IGNORE_AMOUNT[token.chainId]
-            ? token.amount - NATIVE_ASSET_IGNORE_AMOUNT[token.chainId]
+        lower(usedToken.address) === DOLPHIN_ADDRESS
+          ? usedToken.amount > NATIVE_ASSET_IGNORE_AMOUNT[usedToken.chainId]
+            ? usedToken.amount - NATIVE_ASSET_IGNORE_AMOUNT[usedToken.chainId]
             : 0n
-          : token.amount
+          : usedToken.amount
 
-      formattedAmount = formatUnits(maxAmount, token.decimals)
+      formattedAmount = formatUnits(maxAmount, usedToken.decimals)
     }
     const slicedAmount = formattedAmount.endsWith('.0')
       ? formattedAmount.slice(0, -2)
@@ -129,8 +130,8 @@ export const TxFormInput = (props: TxFormInputProps) => {
 
   const TokenBadge = (props: { className?: string }) => (
     <div className={classNames('flex shrink-0 items-center gap-1', props.className)}>
-      <TokenIcon token={token} fallbackToken={fallbackLogoToken} />
-      <span className='text-lg font-semibold md:text-2xl'>{token.symbol}</span>
+      <TokenIcon token={usedToken} fallbackToken={fallbackLogoToken} />
+      <span className='text-lg font-semibold md:text-2xl'>{usedToken.symbol}</span>
     </div>
   )
 
@@ -153,7 +154,7 @@ export const TxFormInput = (props: TxFormInputProps) => {
       <div className='flex justify-between md:gap-6'>
         <Input
           formKey={formKey}
-          decimals={token.decimals}
+          decimals={usedToken.decimals}
           validate={validate}
           disabled={disabled || isLoading}
           onChange={onChange}
@@ -201,7 +202,8 @@ export const TxFormInput = (props: TxFormInputProps) => {
           </div>
           <div className='flex gap-1 ml-auto'>
             <span>
-              {t('balance')} {getRoundedDownFormattedTokenAmount(token.amount, token.decimals)}
+              {t('balance')}{' '}
+              {getRoundedDownFormattedTokenAmount(usedToken.amount, usedToken.decimals)}
             </span>
             {showMaxButton && (
               <span

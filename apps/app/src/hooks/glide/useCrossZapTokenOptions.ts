@@ -1,6 +1,6 @@
 import { Vault } from '@generationsoftware/hyperstructure-client-js'
-import { listPaymentOptions, PaymentOption } from '@paywithglide/glide-js'
-import { vaultABI } from '@shared/utilities'
+import { CAIP19, listPaymentOptions, PaymentOption } from '@paywithglide/glide-js'
+import { DOLPHIN_ADDRESS, vaultABI } from '@shared/utilities'
 import { useQuery } from '@tanstack/react-query'
 import { Address, parseUnits } from 'viem'
 import { GLIDE_CONFIG } from '@constants/glide'
@@ -10,9 +10,16 @@ export const getChainIdFromString = (stringChainId: `eip155:${number}`) => {
   return Number(stringChainId.split(':')[1])
 }
 
-// export const getTokenAddressFromEipString = (eipString: string) {
-
-// }
+function getTokenAddress(stringPaymentCurrency: CAIP19) {
+  const parts = stringPaymentCurrency.split(':');
+  console.log(parts)
+  if (parts[1].includes('slip')) {
+    console.log(parts[1])
+    return DOLPHIN_ADDRESS as Address;
+  } 
+  return parts[2] as Address;
+  
+}
 
 export function useCrossZapTokenOptions(vault: Vault, userAddress: Address) {
   const depositAmount = parseUnits(DEFAULT_DEPOSIT_AMOUNT, 6)
@@ -32,12 +39,13 @@ export function useCrossZapTokenOptions(vault: Vault, userAddress: Address) {
         .filter((item) => !(getChainIdFromString(item.chainId) == vault.chainId))
         .reduce((acc, curr) => {
           const chainId = getChainIdFromString(curr.chainId)
+          const address = getTokenAddress(curr.paymentCurrency)
           const availableOptionsInChainId = acc[chainId] ?? []
           const tokenDecimals = curr.currencySymbol === 'USDC' ? 6 : 18
-          availableOptionsInChainId.push({ ...curr, decimals: tokenDecimals })
+          availableOptionsInChainId.push({ ...curr, decimals: tokenDecimals , chainIdAsNumber: chainId, address})
           acc[chainId] = availableOptionsInChainId
           return acc
-        }, {} as Record<string, (PaymentOption & { decimals: number })[]>)
+        }, {} as Record<string, (PaymentOption & { decimals: number,chainIdAsNumber: number , address: Address})[]>)
 
       return returned
     },

@@ -7,7 +7,13 @@ import { Address } from 'viem'
 import { TOKEN_LOGO_OVERRIDES } from '../../constants'
 
 export interface TokenIconProps {
-  token: Partial<TokenWithLogo>
+  token: {
+    logoURI?: string,
+    symbol?: string,
+    name?: string,
+    chainId?: number,
+    address?:  string
+  }
   fallbackToken?: Partial<TokenWithLogo>
   showSpinner?: boolean
   className?: string

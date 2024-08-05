@@ -27,7 +27,7 @@ import { useAccount } from 'wagmi'
 import { NetworkFees, NetworkFeesProps } from '../../NetworkFees'
 import { Odds } from '../../Odds'
 import {
-  crossingTokenDetailsAtom,
+  crossChainTokenDetailsAtom,
   depositFormShareAmountAtom,
   depositFormTokenAddressAtom,
   depositFormTokenAmountAtom,
@@ -105,7 +105,7 @@ const BasicDepositForm = (props: BasicDepositFormProps) => {
   const formShareAmount = useAtomValue(depositFormShareAmountAtom)
   const depositZapPriceImpact = useAtomValue(depositZapPriceImpactAtom)
   const depositZapMinReceived = useAtomValue(depositZapMinReceivedAtom)
-  const crossingTokenDetails = useAtomValue(crossingTokenDetailsAtom)
+  const crossChainTokenDetails = useAtomValue(crossChainTokenDetailsAtom)
 
   const { data: vaultTokenAddress } = useVaultTokenAddress(vault)
 
@@ -142,11 +142,11 @@ const BasicDepositForm = (props: BasicDepositFormProps) => {
         : inputVault?.logoURI
   }
 
-  const crossTokenInfo = crossingTokenDetails
+  const crossTokenInfo = crossChainTokenDetails
     ? {
-        ...crossingTokenDetails,
+        ...crossChainTokenDetails,
         amount: formTokenAmount,
-        logoURI: crossingTokenDetails.currencyLogoUrl
+        logoURI: crossChainTokenDetails.currencyLogoUrl
       }
     : undefined
 

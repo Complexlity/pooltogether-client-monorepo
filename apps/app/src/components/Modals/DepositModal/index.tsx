@@ -19,8 +19,7 @@ import { TransactionReceipt } from 'viem'
 import { useAccount } from 'wagmi'
 import { DepositCrossTxButton } from './DepositCrossTxButton'
 import {
-  crossingChainDetailsAtom,
-  crossingTokenDetailsAtom,
+  crossChainTokenDetailsAtom,
   depositFormShareAmountAtom,
   depositFormTokenAddressAtom,
   depositFormTokenAmountAtom
@@ -73,9 +72,8 @@ export const DepositModal = (props: DepositModalProps) => {
   const [depositTxHash, setDepositTxHash] = useState<string>()
 
   const [formTokenAddress, setFormTokenAddress] = useAtom(depositFormTokenAddressAtom)
-  const [formCrossingChainDetails, setFormCrossChainDetails] = useAtom(crossingChainDetailsAtom)
-  const crossingTokenDetails = useAtomValue(crossingTokenDetailsAtom)
-  const isCrossing = !!formCrossingChainDetails
+  const [crossChainTokenDetails, setCrossChainTokenDetails] = useAtom(crossChainTokenDetailsAtom)
+  const isCrossing = !!crossChainTokenDetails
   const setFormTokenAmount = useSetAtom(depositFormTokenAmountAtom)
   const [formShareAmount, setFormShareAmount] = useAtom(depositFormShareAmountAtom)
 
@@ -113,7 +111,7 @@ export const DepositModal = (props: DepositModalProps) => {
     setIsModalOpen(false)
     setView('main')
     setFormTokenAddress(undefined)
-    setFormCrossChainDetails(undefined)
+    setCrossChainTokenDetails(undefined)
     setFormTokenAmount('0')
     setFormShareAmount('')
   }
@@ -139,10 +137,10 @@ export const DepositModal = (props: DepositModalProps) => {
       >
         {view === 'main' && !formShareAmount && <RisksDisclaimer vault={vault} />}
 
-        {isCrossing && crossingTokenDetails ? (
+        {isCrossing && crossChainTokenDetails ? (
           <DepositCrossTxButton
             vault={vault}
-            crossTokenDetails={crossingTokenDetails}
+            crossTokenDetails={crossChainTokenDetails}
             modalView={view}
             setModalView={setView}
             setDepositTxHash={setDepositTxHash}
