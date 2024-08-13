@@ -1,8 +1,8 @@
-import { Vault, vaultABI } from '@generationsoftware/hyperstructure-client-js'
-import { CAIP19, createSession, executeSession, Session } from '@paywithglide/glide-js'
+import { Vault } from '@generationsoftware/hyperstructure-client-js'
+import { executeSession, Session } from '@paywithglide/glide-js'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { Address, parseUnits, TransactionReceipt } from 'viem'
+import { parseUnits, TransactionReceipt } from 'viem'
 import {
   useAccount,
   useSendTransaction,
@@ -43,8 +43,6 @@ export const useCrossSendDepositTransaction = (
   if (!vaultDecimals) {
     vaultDecimals = 6
   }
-
-  let depositAmount = parseUnits(`${tokenPriceUsd * Number(amount)}`, vaultDecimals)
 
   const {
     mutate: sendDepositTransaction,

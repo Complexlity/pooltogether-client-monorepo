@@ -1,4 +1,3 @@
-import { ZAP_SETTINGS } from '@constants/config'
 import { Vault } from '@generationsoftware/hyperstructure-client-js'
 import {
   useSelectedVaults,
@@ -10,10 +9,6 @@ import {
   useVaultSharePrice,
   useVaultTokenPrice
 } from '@generationsoftware/hyperstructure-react-hooks'
-import { useCrossZapTokenOptions } from '@hooks/glide/useCrossZapTokenOptions'
-import { useEthPriceInUsd } from '@hooks/useEthPrice'
-import { useSendDepositZapTransaction } from '@hooks/zaps/useSendDepositZapTransaction'
-import { useZapTokenOptions } from '@hooks/zaps/useZapTokenOptions'
 import { PaymentOption } from '@paywithglide/glide-js'
 import { NetworkIcon, TokenIcon } from '@shared/react-components'
 import {
@@ -40,6 +35,11 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { getRoundedDownAmount, getRoundedDownFormattedTokenAmount } from 'src/utils'
 import { Address, formatUnits, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
+import { ZAP_SETTINGS } from '@constants/config'
+import { useCrossZapTokenOptions } from '@hooks/glide/useCrossZapTokenOptions'
+import { useEthPriceInUsd } from '@hooks/useEthPrice'
+import { useSendDepositZapTransaction } from '@hooks/zaps/useSendDepositZapTransaction'
+import { useZapTokenOptions } from '@hooks/zaps/useZapTokenOptions'
 import { isValidFormInput, TxFormInput, TxFormValues } from '../TxFormInput'
 
 export const depositFormTokenAddressAtom = atom<Address | undefined>(undefined)
@@ -99,9 +99,7 @@ export const DepositForm = (props: DepositFormProps) => {
 
   const [formTokenAddress, setFormTokenAddress] = useAtom(depositFormTokenAddressAtom)
   const [formDepositChainId, setFormDepositChainId] = useAtom(depositChainIdAtom)
-  const [crossChainTokenDetails, setCrossChainTokenDetails] = useAtom(
-    crossChainTokenDetailsAtom
-  )
+  const [crossChainTokenDetails, setCrossChainTokenDetails] = useAtom(crossChainTokenDetailsAtom)
 
   const tokenAddress = formTokenAddress ?? vaultToken?.address
   const depositChainId = formDepositChainId ?? vaultToken?.chainId
@@ -361,17 +359,6 @@ export const DepositForm = (props: DepositFormProps) => {
         }
       })
     )
-    //   let options = zapTokenOptions
-    //     .filter(tokenOption => {
-    //       tokenOption.value > 0)
-    //     }
-    // .map(
-    //   (tokenOption): DropdownItem => ({
-    //     id: getOptionId(tokenOption),
-    //     content: <TokenPickerOption token={tokenOption} />,
-    //     onClick: () => setFormTokenAddress(tokenOption.address)
-    //   })
-    // )
 
     if (!!vaultToken) {
       const isVaultToken = (id: string) => lower(id.split('-')[2]) === lower(vaultToken.address)

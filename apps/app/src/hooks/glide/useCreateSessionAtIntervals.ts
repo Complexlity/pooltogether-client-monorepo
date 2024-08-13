@@ -1,21 +1,11 @@
-import {
-  NETWORK,
-  USDC_TOKEN_ADDRESSES,
-  Vault,
-  vaultABI
-} from '@generationsoftware/hyperstructure-client-js'
-import {
-  QUERY_KEYS,
-  useTokenPrices,
-  useVaultTokenPrice
-} from '@generationsoftware/hyperstructure-react-hooks'
-import { CAIP19, createSession, estimatePaymentAmount } from '@paywithglide/glide-js'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Vault, vaultABI } from '@generationsoftware/hyperstructure-client-js'
+import { useTokenPrices } from '@generationsoftware/hyperstructure-react-hooks'
+import { CAIP19, createSession } from '@paywithglide/glide-js'
+import { useQuery } from '@tanstack/react-query'
 import { Address, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
 import { crossTokenDetails } from '@components/Modals/DepositModal/DepositForm'
 import { GLIDE_CONFIG as glideConfig } from '@constants/glide'
-import { useEthPriceInUsd } from '@hooks/useEthPrice'
 
 const GLIDE_SESSION_REFETCH_INTERVAL = 2 * 60 * 1000
 /**
@@ -33,18 +23,14 @@ export const useCreateSessionAtIntervals = (
 ) => {
   const { data } = useTokenPrices(crossTokenDetails.chainId, [crossTokenDetails.address])
   const { address: userAddress } = useAccount()
-  const { data: vaultToken } = useVaultTokenPrice(vault)
-  const { data: ethToUsdPrice } = useEthPriceInUsd()
   const tokenPriceUsd = Number(crossTokenDetails.balanceUSD) / Number(crossTokenDetails.balance)
-  const tokenPriceEth = tokenPriceUsd / Math.round(ethToUsdPrice!)
-  const tokenPriceInVaultToken = tokenPriceEth / vaultToken?.price!
 
   let vaultDecimals = vault.decimals
   if (!vaultDecimals) {
     vaultDecimals = 6
   }
 
-  // Send 1 usd in the deposited token
+  // Send 1 usd in the deposited token. Dummy value. Actuual amount used by glide  is paymentAmount
   let depositAmount = parseUnits(`${1 / tokenPriceUsd}`, vaultDecimals)
   let {
     data: session,

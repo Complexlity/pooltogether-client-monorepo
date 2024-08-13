@@ -13,15 +13,9 @@ import { vaultABI } from '@shared/utilities'
 import { useQueryClient } from '@tanstack/react-query'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { getRoundedDownFormattedTokenAmount } from 'src/utils'
-import {
-  Address,
-  decodeAbiParameters,
-  decodeFunctionData,
-  formatUnits,
-  TransactionReceipt
-} from 'viem'
+import { Address, decodeFunctionData, TransactionReceipt } from 'viem'
 import { useAccount } from 'wagmi'
 import { useCreateSessionAtIntervals } from '@hooks/glide/useCreateSessionAtIntervals'
 import { useCrossSendDepositTransaction } from '@hooks/glide/useCrossSendDepositButton'
@@ -43,7 +37,6 @@ interface DepositTxButtonProps {
   onSuccessfulApproval?: () => void
   onSuccessfulDeposit?: (chainId: number, txReceipt: TransactionReceipt) => void
 }
-
 
 export const currentCrossingSessionAtom = atom<Session | undefined>(undefined)
 export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
@@ -89,14 +82,11 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
 
   const formTokenAmount = useAtomValue(depositFormTokenAmountAtom)
 
-
   const isValidFormInputTokenAmount =
-    !!formTokenAmount &&
-    !Number.isNaN(Number(formTokenAmount)) &&
-    parseFloat(formTokenAmount) > 0 
-  
-  
-  const depositEnabled = Number(crossTokenDetails.balance) >= Number(formTokenAmount) && isValidFormInputTokenAmount
+    !!formTokenAmount && !Number.isNaN(Number(formTokenAmount)) && parseFloat(formTokenAmount) > 0
+
+  const depositEnabled =
+    Number(crossTokenDetails.balance) >= Number(formTokenAmount) && isValidFormInputTokenAmount
 
   const { isCreateSessionError, isCreatingSession, session, isCreatingSessionSuccess } =
     useCreateSessionAtIntervals(isLoadingSession, formTokenAmount, vault, crossTokenDetails)
@@ -106,18 +96,14 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     setIsLoadingSession(false)
   }, [])
 
-
   useEffect(() => {
     if (!!isCreateSessionError && !isCreatingSession) {
       setIsLoadingSession(false)
-    }
-    else if (!!isCreatingSessionSuccess && !isCreatingSession) {
+    } else if (!!isCreatingSessionSuccess && !isCreatingSession) {
       setModalView('review')
       setCurrentSession(session)
     }
-  
   }, [isCreatingSession, isCreateSessionError, isCreatingSessionSuccess, session])
-  
 
   const sessionTransaction = useCrossSendDepositTransaction(
     session,
@@ -167,8 +153,6 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     )
   }
 
-  // No deposit amount set
-
   // Prompt to review deposit
   if (modalView === 'main' || !isLoadingSession) {
     if (isLoadingSession) {
@@ -193,7 +177,6 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
       setFormShareAmount(amount)
     }
   }
-
 
   return (
     <TransactionButton

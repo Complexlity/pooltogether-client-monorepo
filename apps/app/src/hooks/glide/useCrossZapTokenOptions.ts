@@ -10,15 +10,14 @@ export const getChainIdFromString = (stringChainId: `eip155:${number}`) => {
   return Number(stringChainId.split(':')[1])
 }
 
+//Used to assign an "address" to the token. This is currently not used anywhere was initially needed but found it was not accurate
 function getTokenAddress(stringPaymentCurrency: CAIP19) {
-  const parts = stringPaymentCurrency.split(':');
-  console.log(parts)
+  const parts = stringPaymentCurrency.split(':')
   if (parts[1].includes('slip')) {
-    console.log(parts[1])
-    return DOLPHIN_ADDRESS as Address;
-  } 
-  return parts[2] as Address;
-  
+    //Not totally accurate to assign dolphin address to all slip tokens e.g Avax and Matic returns slip//... but their addresses are not dolphin addressses
+    return DOLPHIN_ADDRESS as Address
+  }
+  return parts[2] as Address
 }
 
 export function useCrossZapTokenOptions(vault: Vault, userAddress: Address) {
@@ -42,10 +41,15 @@ export function useCrossZapTokenOptions(vault: Vault, userAddress: Address) {
           const address = getTokenAddress(curr.paymentCurrency)
           const availableOptionsInChainId = acc[chainId] ?? []
           const tokenDecimals = curr.currencySymbol === 'USDC' ? 6 : 18
-          availableOptionsInChainId.push({ ...curr, decimals: tokenDecimals , chainIdAsNumber: chainId, address})
+          availableOptionsInChainId.push({
+            ...curr,
+            decimals: tokenDecimals,
+            chainIdAsNumber: chainId,
+            address
+          })
           acc[chainId] = availableOptionsInChainId
           return acc
-        }, {} as Record<string, (PaymentOption & { decimals: number,chainIdAsNumber: number , address: Address})[]>)
+        }, {} as Record<string, (PaymentOption & { decimals: number; chainIdAsNumber: number; address: Address })[]>)
 
       return returned
     },
