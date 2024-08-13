@@ -22,7 +22,6 @@ import { GLIDE_CONFIG as glideConfig } from '@constants/glide'
  */
 export const useCrossSendDepositTransaction = (
   session: Session | undefined,
-  amount: string,
   vault: Vault,
   crossTokenDetails: crossTokenDetails,
 
@@ -32,17 +31,9 @@ export const useCrossSendDepositTransaction = (
     onError?: () => void
   }
 ) => {
-  const { address: userAddress } = useAccount()
-
   const { switchChainAsync } = useSwitchChain()
   const { sendTransactionAsync } = useSendTransaction()
   const { signTypedDataAsync } = useSignTypedData()
-
-  const tokenPriceUsd = Number(crossTokenDetails.balanceUSD) / Number(crossTokenDetails.balance)
-  let vaultDecimals = vault.decimals
-  if (!vaultDecimals) {
-    vaultDecimals = 6
-  }
 
   const {
     mutate: sendDepositTransaction,

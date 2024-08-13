@@ -105,31 +105,25 @@ export const DepositCrossTxButton = (props: DepositTxButtonProps) => {
     }
   }, [isCreatingSession, isCreateSessionError, isCreatingSessionSuccess, session])
 
-  const sessionTransaction = useCrossSendDepositTransaction(
-    session,
-    formTokenAmount,
-    vault,
-    crossTokenDetails,
-    {
-      onSend: () => {
-        setModalView('waiting')
-      },
-      onSuccess: (txReceipt) => {
-        refetchUserVaultTokenBalance()
-        refetchUserVaultDelegationBalance()
-        refetchVaultBalance()
-        refetchUserBalances?.()
-        onSuccessfulDeposit?.(vault.chainId, txReceipt)
-        queryClient.invalidateQueries({
-          queryKey: ['crossZapOptions']
-        })
-        setModalView('success')
-      },
-      onError: () => {
-        setModalView('error')
-      }
+  const sessionTransaction = useCrossSendDepositTransaction(session, vault, crossTokenDetails, {
+    onSend: () => {
+      setModalView('waiting')
+    },
+    onSuccess: (txReceipt) => {
+      refetchUserVaultTokenBalance()
+      refetchUserVaultDelegationBalance()
+      refetchVaultBalance()
+      refetchUserBalances?.()
+      onSuccessfulDeposit?.(vault.chainId, txReceipt)
+      queryClient.invalidateQueries({
+        queryKey: ['crossZapOptions']
+      })
+      setModalView('success')
+    },
+    onError: () => {
+      setModalView('error')
     }
-  )
+  })
   const {
     isWaiting: isWaitingDeposit,
     isConfirming: isConfirmingDeposit,
