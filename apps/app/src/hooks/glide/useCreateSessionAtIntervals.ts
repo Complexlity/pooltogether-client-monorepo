@@ -1,11 +1,12 @@
 import { Vault, vaultABI } from '@generationsoftware/hyperstructure-client-js'
-import { useTokenPrices } from '@generationsoftware/hyperstructure-react-hooks'
+import { useTokenPrices, useVaultTokenPrice } from '@generationsoftware/hyperstructure-react-hooks'
 import { CAIP19, createSession } from '@paywithglide/glide-js'
 import { useQuery } from '@tanstack/react-query'
 import { Address, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
 import { crossTokenDetails } from '@components/Modals/DepositModal/DepositForm'
 import { GLIDE_CONFIG as glideConfig } from '@constants/glide'
+import { useEthPriceInUsd } from '@hooks/useEthPrice'
 
 const GLIDE_SESSION_REFETCH_INTERVAL = 2 * 60 * 1000
 /**
@@ -21,17 +22,23 @@ export const useCreateSessionAtIntervals = (
   vault: Vault,
   crossTokenDetails: crossTokenDetails
 ) => {
-  const { data } = useTokenPrices(crossTokenDetails.chainId, [crossTokenDetails.address])
   const { address: userAddress } = useAccount()
+  const { data: vaultToken } = useVaultTokenPrice(vault)
+  const { data: ethToUsdPrice } = useEthPriceInUsd()
+
   const tokenPriceUsd = Number(crossTokenDetails.balanceUSD) / Number(crossTokenDetails.balance)
+  const tokenPriceEth = tokenPriceUsd / Math.round(ethToUsdPrice!)
+  const tokenPriceInVaultToken = tokenPriceEth / vaultToken?.price!
 
   let vaultDecimals = vault.decimals
   if (!vaultDecimals) {
     vaultDecimals = 6
   }
 
-  // Send 1 usd in the deposited token. Dummy value. Actuual amount used by glide  is paymentAmount
-  let depositAmount = parseUnits(`${1 / tokenPriceUsd}`, vaultDecimals)
+  //Not really used as glide uses `paymentAmount`,
+  // only passing it because dummy values don't work the same for all vaults i.e `0.001` in przWeth vault is okay but in usdc vaults is too small (and will error) and `1` in przUsdc vault is okay but in weth vault it is too big (and will error)
+  let dummyDepositAmount = parseUnits(`${tokenPriceInVaultToken * Number(amount)}`, vaultDecimals)
+
   let {
     data: session,
     isFetching,
@@ -50,7 +57,7 @@ export const useCreateSessionAtIntervals = (
         account: userAddress as Address,
         abi: vaultABI,
         address: vault?.address as Address,
-        args: [depositAmount, userAddress as Address],
+        args: [dummyDepositAmount, userAddress as Address],
         functionName: 'deposit',
         paymentCurrency: crossTokenDetails.paymentCurrency as CAIP19
       }
