@@ -193,8 +193,8 @@ importers:
         specifier: ^7.5.3
         version: 7.5.3(@opentelemetry/api@1.8.0)(next@14.1.0)(react-dom@18.2.0)(react@18.2.0)
       '@paywithglide/glide-js':
-        specifier: ^0.9.8
-        version: 0.9.8(typescript@5.0.4)
+        specifier: ^0.9.14
+        version: 0.9.14(typescript@5.0.4)
       '@rainbow-me/rainbowkit':
         specifier: 2.1.1
         version: 2.1.1(@tanstack/react-query@5.20.5)(@types/react@18.2.8)(react-dom@18.2.0)(react@18.2.0)(viem@2.13.2)(wagmi@2.9.8)
@@ -5438,8 +5438,8 @@ packages:
       bs58: 4.0.1
     dev: false
 
-  /@paywithglide/glide-js@0.9.8(typescript@5.0.4):
-    resolution: {integrity: sha512-DETgqRG/Q/oC1RkMHHy+mPe04kvLXFY9MdWIaFYUyfJOPJtkP2q8dWbSshSDeiVzf6DBO9vC1rmnv1HuvdEp7w==}
+  /@paywithglide/glide-js@0.9.14(typescript@5.0.4):
+    resolution: {integrity: sha512-+wBinLyCUvaMZxVe8E0MaSI4VdL++K1oa5LM5HxzQgGzo8Jlk+3zZdTtL5LZrApVmYvvDJkuFMwsEobbE7MIAw==}
     dependencies:
       viem: 2.17.5(typescript@5.0.4)
     transitivePeerDependencies:
@@ -15577,7 +15577,7 @@ packages:
       queue-tick: 1.0.1
       text-decoder: 1.1.1
     optionalDependencies:
-      bare-events: 2.2.0
+      bare-events: 2.4.2
     optional: true
 
   /strict-uri-encode@2.0.0:
