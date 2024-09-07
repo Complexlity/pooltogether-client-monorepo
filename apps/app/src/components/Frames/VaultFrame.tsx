@@ -11,6 +11,8 @@ export interface VaultFrameProps {
 export const VaultFrame = (props: VaultFrameProps) => {
   const { chainId, vaultAddress } = props
 
+  return <DefaultFrame />
+
   if (!chainId || !vaultAddress) {
     return <DefaultFrame />
   }

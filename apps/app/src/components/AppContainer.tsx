@@ -47,7 +47,7 @@ export const AppContainer = (props: AppProps & CustomAppProps) => {
   return (
     <>
       <Highlight />
-      {pageFrame ?? <DefaultFrame />}
+      <DefaultFrame />
       <Flowbite>
         <Toaster expand={false} />
         <NextIntlClientProvider locale={locale} messages={pageProps.messages}>
